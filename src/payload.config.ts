@@ -21,6 +21,7 @@ export default buildConfig({
     },
   },
   collections: [Users, Media],
+  cookiePrefix: "langhub",
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || "",
   typescript: {
