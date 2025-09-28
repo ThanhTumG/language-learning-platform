@@ -69,6 +69,8 @@ export interface Config {
   collections: {
     users: User;
     media: Media;
+    toeic: Toeic;
+    'toeic-attempts': ToeicAttempt;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
     'payload-migrations': PayloadMigration;
@@ -77,6 +79,8 @@ export interface Config {
   collectionsSelect: {
     users: UsersSelect<false> | UsersSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
+    toeic: ToeicSelect<false> | ToeicSelect<true>;
+    'toeic-attempts': ToeicAttemptsSelect<false> | ToeicAttemptsSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
     'payload-migrations': PayloadMigrationsSelect<false> | PayloadMigrationsSelect<true>;
@@ -120,6 +124,15 @@ export interface UserAuthOperations {
 export interface User {
   id: number;
   fullname: string;
+  avatar?: (number | null) | Media;
+  studyStreak?: number | null;
+  lastStudyDate?: string | null;
+  totalTestsCompleted?: number | null;
+  averageScore?: number | null;
+  bestScore?: number | null;
+  learningGoals?: {
+    targetScore?: number | null;
+  };
   updatedAt: string;
   createdAt: string;
   email: string;
@@ -159,6 +172,188 @@ export interface Media {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "toeic".
+ */
+export interface Toeic {
+  id: number;
+  title: string;
+  description?: string | null;
+  duration: number;
+  totalQuestions: number;
+  listeningSection: {
+    duration: number;
+    totalQuestions: number;
+    parts?:
+      | {
+          partNumber: number;
+          title: string;
+          description?: string | null;
+          questionCount: number;
+          questions?:
+            | {
+                questionNumber: number;
+                questionText?: string | null;
+                audioFile?: (number | null) | Media;
+                imageFile?: (number | null) | Media;
+                options?:
+                  | {
+                      option: string;
+                      isCorrect?: boolean | null;
+                      id?: string | null;
+                    }[]
+                  | null;
+                correctAnswer: string;
+                explanation?: string | null;
+                difficulty?: ('easy' | 'medium' | 'hard') | null;
+                id?: string | null;
+              }[]
+            | null;
+          id?: string | null;
+        }[]
+      | null;
+  };
+  readingSection: {
+    duration: number;
+    totalQuestions: number;
+    parts?:
+      | {
+          partNumber: number;
+          title: string;
+          description?: string | null;
+          questionCount: number;
+          passages?:
+            | {
+                passageNumber: number;
+                title?: string | null;
+                content?: {
+                  root: {
+                    type: string;
+                    children: {
+                      type: any;
+                      version: number;
+                      [k: string]: unknown;
+                    }[];
+                    direction: ('ltr' | 'rtl') | null;
+                    format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+                    indent: number;
+                    version: number;
+                  };
+                  [k: string]: unknown;
+                } | null;
+                questions?:
+                  | {
+                      questionNumber: number;
+                      questionText: string;
+                      options?:
+                        | {
+                            option: string;
+                            isCorrect?: boolean | null;
+                            id?: string | null;
+                          }[]
+                        | null;
+                      correctAnswer: string;
+                      explanation?: string | null;
+                      difficulty?: ('easy' | 'medium' | 'hard') | null;
+                      id?: string | null;
+                    }[]
+                  | null;
+                id?: string | null;
+              }[]
+            | null;
+          id?: string | null;
+        }[]
+      | null;
+  };
+  scoring: {
+    listeningMaxScore: number;
+    readingMaxScore: number;
+    totalMaxScore: number;
+  };
+  metadata?: {
+    level?: ('beginner' | 'intermediate' | 'advanced') | null;
+    tags?:
+      | {
+          tag: string;
+          id?: string | null;
+        }[]
+      | null;
+    isPublished?: boolean | null;
+    createdBy?: (number | null) | User;
+  };
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "toeic-attempts".
+ */
+export interface ToeicAttempt {
+  id: number;
+  user: number | User;
+  test: number | Toeic;
+  attemptTitle?: string | null;
+  attemptDate: string;
+  timeSpent?: number | null;
+  scores?: {
+    listening?: number | null;
+    reading?: number | null;
+    total?: number | null;
+  };
+  sectionScores?: {
+    listeningDetails?: {
+      part1?: number | null;
+      part2?: number | null;
+      part3?: number | null;
+      part4?: number | null;
+    };
+    readingDetails?: {
+      part5?: number | null;
+      part6?: number | null;
+      part7?: number | null;
+    };
+  };
+  answers?:
+    | {
+        questionNumber: number;
+        section: 'listening' | 'reading';
+        part: number;
+        userAnswer?: string | null;
+        correctAnswer?: string | null;
+        isCorrect?: boolean | null;
+        timeSpent?: number | null;
+        difficulty?: ('easy' | 'medium' | 'hard') | null;
+        id?: string | null;
+      }[]
+    | null;
+  status?: ('in_progress' | 'completed' | 'abandoned' | 'timeout') | null;
+  notes?: string | null;
+  attemptNumber?: number | null;
+  improvement?: {
+    previousAttempt?: (number | null) | ToeicAttempt;
+  };
+  analytics?: {
+    accuracyRate?: number | null;
+    averageTimePerQuestion?: number | null;
+    weakAreas?:
+      | {
+          part: number;
+          accuracy: number;
+          id?: string | null;
+        }[]
+      | null;
+    strongAreas?:
+      | {
+          part: number;
+          accuracy: number;
+          id?: string | null;
+        }[]
+      | null;
+  };
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-locked-documents".
  */
 export interface PayloadLockedDocument {
@@ -171,6 +366,14 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'media';
         value: number | Media;
+      } | null)
+    | ({
+        relationTo: 'toeic';
+        value: number | Toeic;
+      } | null)
+    | ({
+        relationTo: 'toeic-attempts';
+        value: number | ToeicAttempt;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -220,6 +423,17 @@ export interface PayloadMigration {
  */
 export interface UsersSelect<T extends boolean = true> {
   fullname?: T;
+  avatar?: T;
+  studyStreak?: T;
+  lastStudyDate?: T;
+  totalTestsCompleted?: T;
+  averageScore?: T;
+  bestScore?: T;
+  learningGoals?:
+    | T
+    | {
+        targetScore?: T;
+      };
   updatedAt?: T;
   createdAt?: T;
   email?: T;
@@ -254,6 +468,192 @@ export interface MediaSelect<T extends boolean = true> {
   height?: T;
   focalX?: T;
   focalY?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "toeic_select".
+ */
+export interface ToeicSelect<T extends boolean = true> {
+  title?: T;
+  description?: T;
+  duration?: T;
+  totalQuestions?: T;
+  listeningSection?:
+    | T
+    | {
+        duration?: T;
+        totalQuestions?: T;
+        parts?:
+          | T
+          | {
+              partNumber?: T;
+              title?: T;
+              description?: T;
+              questionCount?: T;
+              questions?:
+                | T
+                | {
+                    questionNumber?: T;
+                    questionText?: T;
+                    audioFile?: T;
+                    imageFile?: T;
+                    options?:
+                      | T
+                      | {
+                          option?: T;
+                          isCorrect?: T;
+                          id?: T;
+                        };
+                    correctAnswer?: T;
+                    explanation?: T;
+                    difficulty?: T;
+                    id?: T;
+                  };
+              id?: T;
+            };
+      };
+  readingSection?:
+    | T
+    | {
+        duration?: T;
+        totalQuestions?: T;
+        parts?:
+          | T
+          | {
+              partNumber?: T;
+              title?: T;
+              description?: T;
+              questionCount?: T;
+              passages?:
+                | T
+                | {
+                    passageNumber?: T;
+                    title?: T;
+                    content?: T;
+                    questions?:
+                      | T
+                      | {
+                          questionNumber?: T;
+                          questionText?: T;
+                          options?:
+                            | T
+                            | {
+                                option?: T;
+                                isCorrect?: T;
+                                id?: T;
+                              };
+                          correctAnswer?: T;
+                          explanation?: T;
+                          difficulty?: T;
+                          id?: T;
+                        };
+                    id?: T;
+                  };
+              id?: T;
+            };
+      };
+  scoring?:
+    | T
+    | {
+        listeningMaxScore?: T;
+        readingMaxScore?: T;
+        totalMaxScore?: T;
+      };
+  metadata?:
+    | T
+    | {
+        level?: T;
+        tags?:
+          | T
+          | {
+              tag?: T;
+              id?: T;
+            };
+        isPublished?: T;
+        createdBy?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "toeic-attempts_select".
+ */
+export interface ToeicAttemptsSelect<T extends boolean = true> {
+  user?: T;
+  test?: T;
+  attemptTitle?: T;
+  attemptDate?: T;
+  timeSpent?: T;
+  scores?:
+    | T
+    | {
+        listening?: T;
+        reading?: T;
+        total?: T;
+      };
+  sectionScores?:
+    | T
+    | {
+        listeningDetails?:
+          | T
+          | {
+              part1?: T;
+              part2?: T;
+              part3?: T;
+              part4?: T;
+            };
+        readingDetails?:
+          | T
+          | {
+              part5?: T;
+              part6?: T;
+              part7?: T;
+            };
+      };
+  answers?:
+    | T
+    | {
+        questionNumber?: T;
+        section?: T;
+        part?: T;
+        userAnswer?: T;
+        correctAnswer?: T;
+        isCorrect?: T;
+        timeSpent?: T;
+        difficulty?: T;
+        id?: T;
+      };
+  status?: T;
+  notes?: T;
+  attemptNumber?: T;
+  improvement?:
+    | T
+    | {
+        previousAttempt?: T;
+      };
+  analytics?:
+    | T
+    | {
+        accuracyRate?: T;
+        averageTimePerQuestion?: T;
+        weakAreas?:
+          | T
+          | {
+              part?: T;
+              accuracy?: T;
+              id?: T;
+            };
+        strongAreas?:
+          | T
+          | {
+              part?: T;
+              accuracy?: T;
+              id?: T;
+            };
+      };
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
