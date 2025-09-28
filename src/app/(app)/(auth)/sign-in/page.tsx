@@ -6,7 +6,7 @@ export default async function Page() {
   const session = await caller.auth.session();
 
   if (session.user) {
-    redirect("/");
+    redirect("/dashboard");
   }
   return <SignInView />;
 }

@@ -51,7 +51,7 @@ export const SignInView = () => {
     trpc.auth.login.mutationOptions({
       onSuccess: async () => {
         await queryClient.invalidateQueries(trpc.auth.session.queryOptions());
-        router.push("/");
+        router.push("/dashboard");
       },
       onError: (error) => {
         toast.error(error.message);
@@ -62,7 +62,7 @@ export const SignInView = () => {
     trpc.auth.register.mutationOptions({
       onSuccess: async () => {
         await queryClient.invalidateQueries(trpc.auth.session.queryOptions());
-        router.push("/");
+        router.push("/dashboard");
       },
       onError: (error) => {
         toast.error(error.message);

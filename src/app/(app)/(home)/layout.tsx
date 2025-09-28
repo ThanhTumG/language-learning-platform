@@ -8,7 +8,6 @@ export default function RootLayout({
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar />
-
       {children}
     </div>
   );
