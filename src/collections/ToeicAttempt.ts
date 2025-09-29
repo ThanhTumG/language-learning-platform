@@ -4,14 +4,7 @@ export const ToeicAttempt: CollectionConfig = {
   slug: "toeic-attempts",
   admin: {
     useAsTitle: "attemptTitle",
-    defaultColumns: [
-      "user",
-      "test",
-      "attemptDate",
-      "totalScore",
-      "status",
-      "createdAt",
-    ],
+    defaultColumns: ["user", "test", "score>total", "status", "createdAt"],
   },
   access: {
     create: ({ req: { user } }) => !!user,
@@ -57,6 +50,7 @@ export const ToeicAttempt: CollectionConfig = {
     {
       name: "attemptTitle",
       type: "text",
+      required: true,
       admin: {
         readOnly: true,
       },
@@ -74,12 +68,6 @@ export const ToeicAttempt: CollectionConfig = {
           },
         ],
       },
-    },
-    {
-      name: "attemptDate",
-      type: "date",
-      required: true,
-      defaultValue: () => new Date(),
     },
     {
       name: "timeSpent",
@@ -353,6 +341,122 @@ export const ToeicAttempt: CollectionConfig = {
         }
       },
     ],
+    // afterChange: [
+    //   async ({ req, doc, operation }) => {
+    //     try {
+    //       if (!req.user) return;
+    //       if (operation !== "create" && operation !== "update") return;
+
+    //       const payload = req.payload;
+    //       const userId = req.user.id;
+    //       const skill = "toeic";
+
+    //       // Lấy progress hiện tại của skill
+    //       const existing = await payload.find({
+    //         collection: "progress",
+    //         limit: 1,
+    //         where: {
+    //           and: [{ user: { equals: userId } }, { skill: { equals: skill } }],
+    //         },
+    //       });
+
+    //       const now = new Date();
+    //       const isStudyToday = true;
+
+    //       const baseUpdate: {
+    //         lastStudyDate: string;
+    //         bestScore?: number;
+    //         totalTestsCompleted?: number;
+    //         averageScore?: number;
+    //         studyStreak?: number;
+    //       } = {
+    //         lastStudyDate: now.toISOString(),
+    //       };
+
+    //       if (doc.scores?.total != null) {
+    //         baseUpdate.bestScore = Math.max(
+    //           Number(existing.docs?.[0]?.bestScore || 0),
+    //           Number(doc.scores.total)
+    //         );
+    //       }
+
+    //       // Tăng tổng số bài test hoàn thành nếu status = completed
+    //       if (doc.status === "completed") {
+    //         baseUpdate.totalTestsCompleted = Number(
+    //           (existing.docs?.[0]?.totalTestsCompleted || 0) + 1
+    //         );
+    //       }
+
+    //       // Tính averageScore đơn giản theo công thức gộp (có thể cải tiến sau)
+    //       if (doc.scores?.total != null) {
+    //         const prevAvg = Number(existing.docs?.[0]?.averageScore || 0);
+    //         const prevCount = Number(
+    //           existing.docs?.[0]?.totalTestsCompleted || 0
+    //         );
+    //         const newCount =
+    //           doc.status === "completed" ? prevCount + 1 : prevCount;
+    //         const newAvg =
+    //           newCount > 0
+    //             ? Math.round(
+    //                 (prevAvg * prevCount + Number(doc.scores.total)) / newCount
+    //               )
+    //             : Number(doc.scores.total);
+    //         baseUpdate.averageScore = newAvg;
+    //       }
+
+    //       // Cập nhật streak nếu học ngày mới
+    //       if (isStudyToday) {
+    //         const prevDateStr = existing.docs?.[0]?.lastStudyDate as
+    //           | string
+    //           | undefined;
+    //         const prevDate = prevDateStr ? new Date(prevDateStr) : undefined;
+    //         const diffDays = prevDate
+    //           ? Math.floor(
+    //               (now.getTime() - prevDate.getTime()) / (1000 * 60 * 60 * 24)
+    //             )
+    //           : undefined;
+    //         let newStreak = Number(existing.docs?.[0]?.studyStreak || 0);
+    //         if (diffDays === undefined) {
+    //           newStreak = 1;
+    //         } else if (diffDays === 0) {
+    //           // cùng ngày, giữ nguyên
+    //         } else if (diffDays === 1) {
+    //           newStreak += 1;
+    //         } else if (diffDays > 1) {
+    //           newStreak = 1;
+    //         }
+    //         baseUpdate.studyStreak = newStreak;
+    //       }
+
+    //       if (existing.docs && existing.docs.length > 0) {
+    //         await payload.update({
+    //           collection: "progress",
+    //           id: (existing.docs[0] as unknown as { id: number | string }).id,
+    //           data: baseUpdate,
+    //         });
+    //       } else {
+    //         await payload.create({
+    //           collection: "progress",
+    //           data: {
+    //             user: userId,
+    //             skill,
+    //             studyStreak: baseUpdate.studyStreak ?? 1,
+    //             lastStudyDate: baseUpdate.lastStudyDate,
+    //             totalTestsCompleted:
+    //               baseUpdate.totalTestsCompleted ??
+    //               (doc.status === "completed" ? 1 : 0),
+    //             averageScore:
+    //               baseUpdate.averageScore ?? doc.scores?.total ?? undefined,
+    //             bestScore:
+    //               baseUpdate.bestScore ?? doc.scores?.total ?? undefined,
+    //           },
+    //         });
+    //       }
+    //     } catch (e) {
+    //       // bỏ qua lỗi phụ
+    //     }
+    //   },
+    // ],
   },
   timestamps: true,
 };
