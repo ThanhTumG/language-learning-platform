@@ -4,13 +4,7 @@ export const Users: CollectionConfig = {
   slug: "users",
   admin: {
     useAsTitle: "email",
-    defaultColumns: [
-      "email",
-      "fullname",
-      "studyStreak",
-      "totalTestsCompleted",
-      "createdAt",
-    ],
+    defaultColumns: ["email", "fullname", "createdAt"],
   },
   auth: true,
   fields: [
@@ -24,55 +18,7 @@ export const Users: CollectionConfig = {
       type: "upload",
       relationTo: "media",
     },
-    {
-      name: "studyStreak",
-      type: "number",
-      defaultValue: 0,
-      admin: {
-        readOnly: true,
-      },
-    },
-    {
-      name: "lastStudyDate",
-      type: "date",
-      admin: {
-        readOnly: true,
-      },
-    },
-    {
-      name: "totalTestsCompleted",
-      type: "number",
-      defaultValue: 0,
-      admin: {
-        readOnly: true,
-      },
-    },
-    {
-      name: "averageScore",
-      type: "number",
-      admin: {
-        readOnly: true,
-      },
-    },
-    {
-      name: "bestScore",
-      type: "number",
-      admin: {
-        readOnly: true,
-      },
-    },
-    {
-      name: "learningGoals",
-      type: "group",
-      fields: [
-        {
-          name: "targetScore",
-          type: "number",
-          min: 0,
-          max: 990,
-        },
-      ],
-    },
+    // Các trường tiến độ đã được tách sang collection Progress
     // {
     //   name: "achievements",
     //   type: "array",

@@ -71,6 +71,7 @@ export interface Config {
     media: Media;
     toeic: Toeic;
     'toeic-attempts': ToeicAttempt;
+    progress: Progress;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
     'payload-migrations': PayloadMigration;
@@ -81,6 +82,7 @@ export interface Config {
     media: MediaSelect<false> | MediaSelect<true>;
     toeic: ToeicSelect<false> | ToeicSelect<true>;
     'toeic-attempts': ToeicAttemptsSelect<false> | ToeicAttemptsSelect<true>;
+    progress: ProgressSelect<false> | ProgressSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
     'payload-migrations': PayloadMigrationsSelect<false> | PayloadMigrationsSelect<true>;
@@ -125,14 +127,6 @@ export interface User {
   id: number;
   fullname: string;
   avatar?: (number | null) | Media;
-  studyStreak?: number | null;
-  lastStudyDate?: string | null;
-  totalTestsCompleted?: number | null;
-  averageScore?: number | null;
-  bestScore?: number | null;
-  learningGoals?: {
-    targetScore?: number | null;
-  };
   updatedAt: string;
   createdAt: string;
   email: string;
@@ -291,8 +285,7 @@ export interface ToeicAttempt {
   id: number;
   user: number | User;
   test: number | Toeic;
-  attemptTitle?: string | null;
-  attemptDate: string;
+  attemptTitle: string;
   timeSpent?: number | null;
   scores?: {
     listening?: number | null;
@@ -354,6 +347,32 @@ export interface ToeicAttempt {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "progress".
+ */
+export interface Progress {
+  id: number;
+  user: number | User;
+  skill: 'toeic' | 'ielts';
+  studyStreak?: number | null;
+  lastStudyDate?: string | null;
+  totalTestsCompleted?: number | null;
+  averageScore?: number | null;
+  skillsAverage?:
+    | {
+        subSkill: 'listening' | 'reading' | 'writing' | 'speaking';
+        averageScore?: number | null;
+        id?: string | null;
+      }[]
+    | null;
+  bestScore?: number | null;
+  learningGoals?: {
+    targetScore?: number | null;
+  };
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-locked-documents".
  */
 export interface PayloadLockedDocument {
@@ -374,6 +393,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'toeic-attempts';
         value: number | ToeicAttempt;
+      } | null)
+    | ({
+        relationTo: 'progress';
+        value: number | Progress;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -424,16 +447,6 @@ export interface PayloadMigration {
 export interface UsersSelect<T extends boolean = true> {
   fullname?: T;
   avatar?: T;
-  studyStreak?: T;
-  lastStudyDate?: T;
-  totalTestsCompleted?: T;
-  averageScore?: T;
-  bestScore?: T;
-  learningGoals?:
-    | T
-    | {
-        targetScore?: T;
-      };
   updatedAt?: T;
   createdAt?: T;
   email?: T;
@@ -583,7 +596,6 @@ export interface ToeicAttemptsSelect<T extends boolean = true> {
   user?: T;
   test?: T;
   attemptTitle?: T;
-  attemptDate?: T;
   timeSpent?: T;
   scores?:
     | T
@@ -651,6 +663,33 @@ export interface ToeicAttemptsSelect<T extends boolean = true> {
               accuracy?: T;
               id?: T;
             };
+      };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "progress_select".
+ */
+export interface ProgressSelect<T extends boolean = true> {
+  user?: T;
+  skill?: T;
+  studyStreak?: T;
+  lastStudyDate?: T;
+  totalTestsCompleted?: T;
+  averageScore?: T;
+  skillsAverage?:
+    | T
+    | {
+        subSkill?: T;
+        averageScore?: T;
+        id?: T;
+      };
+  bestScore?: T;
+  learningGoals?:
+    | T
+    | {
+        targetScore?: T;
       };
   updatedAt?: T;
   createdAt?: T;
