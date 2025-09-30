@@ -1,14 +1,16 @@
 import { authRouter } from "@/modules/auth/server/procedures";
 import { createTRPCRouter } from "../init";
-import { ToeicAttemptsRouter } from "@/modules/toeic-attempts/server/procedures";
-import { UserRouter } from "@/modules/user/server/procedures";
-import { ProgressRouter } from "@/modules/progress/server/procedures";
+import { toeicAttemptsRouter } from "@/modules/toeic-attempts/server/procedures";
+import { userRouter } from "@/modules/user/server/procedures";
+import { progressRouter } from "@/modules/progress/server/procedures";
+import { toeicTestsRouter } from "@/modules/toeic-tests/server/procedures";
 
 export const appRouter = createTRPCRouter({
   auth: authRouter,
-  user: UserRouter,
-  toeicAttempts: ToeicAttemptsRouter,
-  progress: ProgressRouter,
+  user: userRouter,
+  toeic: toeicTestsRouter,
+  toeicAttempts: toeicAttemptsRouter,
+  progress: progressRouter,
 });
 // export type definition of API
 export type AppRouter = typeof appRouter;

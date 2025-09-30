@@ -2,7 +2,7 @@ import { createTRPCRouter, protectedProcedure } from "@/trpc/init";
 import { TRPCError } from "@trpc/server";
 import z from "zod";
 
-export const ToeicAttemptsRouter = createTRPCRouter({
+export const toeicAttemptsRouter = createTRPCRouter({
   getOne: protectedProcedure
     .input(
       z.object({

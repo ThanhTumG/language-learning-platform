@@ -69,17 +69,18 @@ export const DashboardView = () => {
       {
         key: "avg-score",
         title: "Average Score",
-        content: progress?.averageScore?.toString(),
-        note:
-          progress?.averageScore && progress?.averageScore >= 450
+        content: (progress?.averageScore ?? 0).toString(),
+        note: progress?.averageScore
+          ? progress?.averageScore >= 450
             ? "You are doing great!"
-            : "Keep trying!",
+            : "Keep trying!"
+          : "",
         Icon: Award,
       },
       {
         key: "best-score",
         title: "Best Score",
-        content: progress?.bestScore?.toString(),
+        content: (progress?.bestScore ?? 0).toString(),
         note: progress?.bestScore
           ? `${900 - progress?.bestScore} points to go`
           : "",
@@ -88,8 +89,8 @@ export const DashboardView = () => {
       {
         key: "study-streak",
         title: "Study Streak",
-        content: progress?.studyStreak?.toString(),
-        note: "Keep it up!",
+        content: (progress?.studyStreak ?? 0).toString(),
+        note: progress?.studyStreak ? "Keep it up!" : "",
         Icon: Target,
       },
     ],
@@ -191,17 +192,18 @@ export const DashboardView = () => {
             <CardContent>
               <Suspense fallback={<RecentTestSkeleton />}>
                 <div className="space-y-4">
-                  {ToeicData.pages.flatMap((page) =>
-                    page.docs.map((attempt) => (
-                      <AttemptCard
-                        key={attempt.id}
-                        date={attempt.createdAt}
-                        name={attempt.attemptTitle as string}
-                        score={attempt.scores?.total || 0}
-                        type="toeic"
-                      />
-                    ))
-                  )}
+                  {skill === Skills.TOEIC &&
+                    ToeicData.pages.flatMap((page) =>
+                      page.docs.map((attempt) => (
+                        <AttemptCard
+                          key={attempt.id}
+                          date={attempt.createdAt}
+                          name={attempt.attemptTitle as string}
+                          score={attempt.scores?.total || 0}
+                          type="toeic"
+                        />
+                      ))
+                    )}
                 </div>
                 <div className="flex justify-center pt-8">
                   {hasNextPage && (

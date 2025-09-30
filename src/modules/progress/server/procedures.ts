@@ -1,7 +1,7 @@
 import { createTRPCRouter, protectedProcedure } from "@/trpc/init";
 import z from "zod";
 
-export const ProgressRouter = createTRPCRouter({
+export const progressRouter = createTRPCRouter({
   getBySkill: protectedProcedure
     .input(
       z.object({
