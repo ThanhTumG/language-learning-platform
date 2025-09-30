@@ -1,6 +1,6 @@
 "use client";
 
-import { BookOpen, LogOut } from "lucide-react";
+import { BarChart3, BookOpen, LogOut, Settings, User } from "lucide-react";
 import { Button } from "./ui/button";
 import { Poppins } from "next/font/google";
 import { cn } from "@/lib/utils";
@@ -8,6 +8,14 @@ import Link from "next/link";
 import { useTRPC } from "@/trpc/client";
 import { useQuery } from "@tanstack/react-query";
 import { usePathname } from "next/navigation";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "./ui/dropdown-menu";
+import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -36,7 +44,7 @@ const NavbarItem = ({ href, children, isActive }: NavbarItemProps) => {
 
 const navbarItems = [
   { href: "/dashboard", children: "Dashboard" },
-  { href: "/test-practices", children: "Test Practices" },
+  { href: "/test-practices/toeic", children: "Toeic Test" },
   { href: "/overall", children: "Overall" },
 ];
 
@@ -76,12 +84,56 @@ export const Navbar = () => {
 
       <div className="flex items-center h-[60%]">
         {session.data?.user ? (
-          <Button
-            variant="ghost"
-            className="rounded-full h-12 w-12 flex items-center"
-          >
-            <LogOut className="w-6 h-6" />
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger className="relative h-10 w-10 rounded-full border-0 bg-transparent hover:bg-accent focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2">
+              <Avatar className="h-10 w-10 cursor-pointer">
+                {(() => {
+                  const avatar = session.data?.user?.avatar;
+                  const avatarUrl =
+                    avatar && typeof avatar === "object" && "url" in avatar
+                      ? avatar.url ?? undefined
+                      : undefined;
+                  return (
+                    <AvatarImage
+                      src={avatarUrl}
+                      alt={session.data.user.fullname}
+                    />
+                  );
+                })()}
+                <AvatarFallback>
+                  {session.data.user.fullname.charAt(0).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-56" align="end">
+              <div className="flex items-center justify-start gap-2 p-2">
+                <div className="flex flex-col space-y-1 leading-none">
+                  <p className="font-medium">{session.data.user.fullname}</p>
+                  <p className="w-[200px] truncate text-sm text-muted-foreground">
+                    {session.data.user.email}
+                  </p>
+                </div>
+              </div>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem>
+                <User className="mr-2 h-4 w-4" />
+                Profile
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                <BarChart3 className="mr-2 h-4 w-4" />
+                Progress
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                <Settings className="mr-2 h-4 w-4" />
+                Settings
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem>
+                <LogOut className="mr-2 h-4 w-4" />
+                Log out
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         ) : (
           <Button className="h-full font-medium text-base">
             <Link prefetch href={"/sign-in"}>

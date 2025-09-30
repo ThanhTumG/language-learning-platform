@@ -1,19 +1,16 @@
 "use client";
 
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DEFAULT_LIMIT } from "@/constants";
 import { useTRPC } from "@/trpc/client";
 import { useSuspenseInfiniteQuery } from "@tanstack/react-query";
-import { Suspense, useState } from "react";
+import { Suspense } from "react";
 import { TestCard, TestCardSkeleton } from "../components/test-card";
 import { Button } from "@/components/ui/button";
-enum Skills {
-  TOEIC = "toeic",
-  IELTS = "ielts",
+interface Props {
+  testType: string;
 }
-export const TestPracticesView = () => {
-  const [skill, setSkill] = useState<Skills>(Skills.TOEIC);
 
+export const TestPracticesView = ({ testType }: Props) => {
   const trpc = useTRPC();
   const {
     data: toeicTests,
@@ -33,35 +30,23 @@ export const TestPracticesView = () => {
     )
   );
 
-  const handleChangeSkill = (skill: string) => {
-    setSkill(skill as Skills);
-  };
-
   return (
-    <div className="container mx-auto px-4 py-8 max-w-4xl">
+    <div className="container mx-auto px-4 py-8 max-w-6xl">
       <div className="mb-6 flex justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
             Practice Tests
           </h1>
           <p className="text-gray-600">
-            Choose a test to practice with realistic {skill.toUpperCase()} test
-            conditions
+            Choose a practice test to view details and start your preparation
           </p>
         </div>
-
-        <Tabs value={skill} onValueChange={handleChangeSkill}>
-          <TabsList>
-            <TabsTrigger value="ielts">IELTS</TabsTrigger>
-            <TabsTrigger value="toeic">TOEIC</TabsTrigger>
-          </TabsList>
-        </Tabs>
       </div>
 
       {/* Test list */}
       <Suspense fallback={<TestListSkeleton />}>
-        <div className="space-y-4">
-          {skill === Skills.TOEIC &&
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {testType === "toeic" &&
             toeicTests?.pages.flatMap((page) =>
               page.docs.map((test) => (
                 <TestCard
@@ -71,6 +56,8 @@ export const TestPracticesView = () => {
                   description={test.description ?? ""}
                   totalTime={test.duration}
                   type="toeic"
+                  difficulty={test.difficulty ?? "medium"}
+                  totalQuestions={test.totalQuestions}
                 />
               ))
             )}
@@ -94,7 +81,7 @@ export const TestPracticesView = () => {
 
 export const TestListSkeleton = () => {
   return (
-    <div className="space-y-4">
+    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
       {Array.from({ length: DEFAULT_LIMIT }).map((_, index) => (
         <TestCardSkeleton key={index} />
       ))}

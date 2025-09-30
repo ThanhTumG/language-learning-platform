@@ -174,6 +174,7 @@ export interface Toeic {
   description?: string | null;
   duration: number;
   totalQuestions: number;
+  difficulty?: ('easy' | 'medium' | 'hard') | null;
   listeningSection: {
     duration: number;
     totalQuestions: number;
@@ -198,7 +199,6 @@ export interface Toeic {
                   | null;
                 correctAnswer: string;
                 explanation?: string | null;
-                difficulty?: ('easy' | 'medium' | 'hard') | null;
                 id?: string | null;
               }[]
             | null;
@@ -247,7 +247,6 @@ export interface Toeic {
                         | null;
                       correctAnswer: string;
                       explanation?: string | null;
-                      difficulty?: ('easy' | 'medium' | 'hard') | null;
                       id?: string | null;
                     }[]
                   | null;
@@ -491,6 +490,7 @@ export interface ToeicSelect<T extends boolean = true> {
   description?: T;
   duration?: T;
   totalQuestions?: T;
+  difficulty?: T;
   listeningSection?:
     | T
     | {
@@ -519,7 +519,6 @@ export interface ToeicSelect<T extends boolean = true> {
                         };
                     correctAnswer?: T;
                     explanation?: T;
-                    difficulty?: T;
                     id?: T;
                   };
               id?: T;
@@ -557,7 +556,6 @@ export interface ToeicSelect<T extends boolean = true> {
                               };
                           correctAnswer?: T;
                           explanation?: T;
-                          difficulty?: T;
                           id?: T;
                         };
                     id?: T;
