@@ -36,6 +36,17 @@ export const Toeic: CollectionConfig = {
       defaultValue: 200,
     },
     {
+      name: "difficulty",
+      type: "select",
+      options: [
+        { label: "Easy", value: "easy" },
+        { label: "Medium", value: "medium" },
+        { label: "Hard", value: "hard" },
+      ],
+      defaultValue: "medium",
+      label: "Difficulty",
+    },
+    {
       name: "listeningSection",
       type: "group",
       label: "Listening section",
@@ -137,17 +148,6 @@ export const Toeic: CollectionConfig = {
                   name: "explanation",
                   type: "textarea",
                   label: "Explanation",
-                },
-                {
-                  name: "difficulty",
-                  type: "select",
-                  options: [
-                    { label: "Easy", value: "easy" },
-                    { label: "Medium", value: "medium" },
-                    { label: "Hard", value: "hard" },
-                  ],
-                  defaultValue: "medium",
-                  label: "Difficulty",
                 },
               ],
             },
@@ -267,17 +267,6 @@ export const Toeic: CollectionConfig = {
                       name: "explanation",
                       type: "textarea",
                       label: "Explanation",
-                    },
-                    {
-                      name: "difficulty",
-                      type: "select",
-                      options: [
-                        { label: "Easy", value: "easy" },
-                        { label: "Medium", value: "medium" },
-                        { label: "Hard", value: "hard" },
-                      ],
-                      defaultValue: "medium",
-                      label: "Difficulty",
                     },
                   ],
                 },

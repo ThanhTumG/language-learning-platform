@@ -44,7 +44,7 @@
 }
 
 @theme {
-  --color-white: #f8f8ff;
+  --color-white: #fcfcff;
   --animate-fade-in-up: fadeInUp 1.1s ease-out;
   --animate-bounce-x: bounceX 2s infinite;
 

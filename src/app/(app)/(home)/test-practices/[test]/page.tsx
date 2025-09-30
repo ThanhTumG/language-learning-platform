@@ -3,7 +3,13 @@ import { TestPracticesView } from "@/modules/test-practices/ui/views/test-practi
 import { getQueryClient, trpc } from "@/trpc/server";
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 
-export default async function Page() {
+interface Props {
+  params: Promise<{ test: string }>;
+}
+
+export default async function Page({ params }: Props) {
+  const { test } = await params;
+
   const queryClient = getQueryClient();
   void queryClient.prefetchInfiniteQuery(
     trpc.toeic.getMany.infiniteQueryOptions({
@@ -13,7 +19,7 @@ export default async function Page() {
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
-      <TestPracticesView />
+      <TestPracticesView testType={test} />
     </HydrationBoundary>
   );
 }
