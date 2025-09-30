@@ -1,7 +1,7 @@
 import { createTRPCRouter, protectedProcedure } from "@/trpc/init";
 import { TRPCError } from "@trpc/server";
 
-export const UserRouter = createTRPCRouter({
+export const userRouter = createTRPCRouter({
   getInfo: protectedProcedure.query(async ({ ctx }) => {
     const userData = await ctx.db.findByID({
       collection: "users",
