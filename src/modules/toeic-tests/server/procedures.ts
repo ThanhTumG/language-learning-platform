@@ -18,7 +18,14 @@ export const toeicTestsRouter = createTRPCRouter({
         page: input.cursor,
       });
 
-      return testsData;
+      const testsWithoutAnswer = testsData.docs.map((test) => {
+        return {
+          ...test,
+          answers: null,
+        };
+      });
+
+      return testsWithoutAnswer;
     }),
   getOne: baseProcedure
     .input(z.object({ testId: z.string() }))
@@ -31,6 +38,12 @@ export const toeicTestsRouter = createTRPCRouter({
       if (!testData) {
         throw new TRPCError({ code: "NOT_FOUND", message: "Test not found" });
       }
-      return testData;
+
+      const testWithoutAnswer = {
+        ...testData,
+        answers: null,
+      };
+
+      return testWithoutAnswer;
     }),
 });

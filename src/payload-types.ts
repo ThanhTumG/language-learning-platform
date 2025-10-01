@@ -178,6 +178,7 @@ export interface Toeic {
   listeningSection: {
     duration: number;
     totalQuestions: number;
+    audioFile: number | Media;
     parts?:
       | {
           partNumber: number;
@@ -188,17 +189,13 @@ export interface Toeic {
             | {
                 questionNumber: number;
                 questionText?: string | null;
-                audioFile?: (number | null) | Media;
                 imageFile?: (number | null) | Media;
                 options?:
                   | {
                       option: string;
-                      isCorrect?: boolean | null;
                       id?: string | null;
                     }[]
                   | null;
-                correctAnswer: string;
-                explanation?: string | null;
                 id?: string | null;
               }[]
             | null;
@@ -241,12 +238,9 @@ export interface Toeic {
                       options?:
                         | {
                             option: string;
-                            isCorrect?: boolean | null;
                             id?: string | null;
                           }[]
                         | null;
-                      correctAnswer: string;
-                      explanation?: string | null;
                       id?: string | null;
                     }[]
                   | null;
@@ -257,6 +251,14 @@ export interface Toeic {
         }[]
       | null;
   };
+  answers?:
+    | {
+        ordinal: number;
+        answer: string;
+        explanation?: string | null;
+        id?: string | null;
+      }[]
+    | null;
   scoring: {
     listeningMaxScore: number;
     readingMaxScore: number;
@@ -496,6 +498,7 @@ export interface ToeicSelect<T extends boolean = true> {
     | {
         duration?: T;
         totalQuestions?: T;
+        audioFile?: T;
         parts?:
           | T
           | {
@@ -508,17 +511,13 @@ export interface ToeicSelect<T extends boolean = true> {
                 | {
                     questionNumber?: T;
                     questionText?: T;
-                    audioFile?: T;
                     imageFile?: T;
                     options?:
                       | T
                       | {
                           option?: T;
-                          isCorrect?: T;
                           id?: T;
                         };
-                    correctAnswer?: T;
-                    explanation?: T;
                     id?: T;
                   };
               id?: T;
@@ -551,17 +550,22 @@ export interface ToeicSelect<T extends boolean = true> {
                             | T
                             | {
                                 option?: T;
-                                isCorrect?: T;
                                 id?: T;
                               };
-                          correctAnswer?: T;
-                          explanation?: T;
                           id?: T;
                         };
                     id?: T;
                   };
               id?: T;
             };
+      };
+  answers?:
+    | T
+    | {
+        ordinal?: T;
+        answer?: T;
+        explanation?: T;
+        id?: T;
       };
   scoring?:
     | T
