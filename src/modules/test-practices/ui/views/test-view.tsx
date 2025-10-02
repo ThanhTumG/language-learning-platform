@@ -12,6 +12,7 @@ import {
 import { useTRPC } from "@/trpc/client";
 import { useQuery } from "@tanstack/react-query";
 import { BookOpen, CheckCircle2, Clock, Play } from "lucide-react";
+import Link from "next/link";
 
 interface Props {
   testId: string;
@@ -19,7 +20,6 @@ interface Props {
 }
 export const TestView = ({ testType, testId }: Props) => {
   const trpc = useTRPC();
-
   const isToeic = testType === "toeic";
   const { data } = useQuery({
     ...trpc.toeic.getOne.queryOptions({ testId }),
@@ -80,9 +80,15 @@ export const TestView = ({ testType, testId }: Props) => {
           </div>
         </CardHeader>
         <CardContent>
-          <Button size="lg" className="w-full md:w-auto">
-            <Play className="h-5 w-5" />
-            Start Practice Test
+          <Button size="lg">
+            <Link
+              className="w-full md:w-auto flex items-center gap-2"
+              prefetch
+              href={`/test-practices/${testType}/${testId}/start`}
+            >
+              <Play className="h-5 w-5" />
+              Start Practice Test
+            </Link>
           </Button>
         </CardContent>
       </Card>
@@ -95,7 +101,7 @@ export const TestView = ({ testType, testId }: Props) => {
 
         <TestSection
           name="Listening"
-          description={`${data?.listeningSection.parts?.length} sections`}
+          description={`${data?.listeningSection.partCount} sections`}
           index={1}
           duration={data?.listeningSection.duration ?? 0}
           questionCount={data?.listeningSection.totalQuestions ?? 0}
@@ -103,7 +109,7 @@ export const TestView = ({ testType, testId }: Props) => {
 
         <TestSection
           name="Reading"
-          description={`${data?.readingSection.parts?.length} sections`}
+          description={`${data?.readingSection.partCount} sections`}
           index={2}
           duration={data?.readingSection.duration ?? 0}
           questionCount={data?.readingSection.totalQuestions ?? 0}

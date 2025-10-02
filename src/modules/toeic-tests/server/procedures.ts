@@ -18,12 +18,17 @@ export const toeicTestsRouter = createTRPCRouter({
         page: input.cursor,
       });
 
-      const testsWithoutAnswer = testsData.docs.map((test) => {
-        return {
-          ...test,
-          answers: null,
-        };
-      });
+      const testsWithoutAnswer = {
+        ...testsData,
+        docs: testsData.docs.map((test) => {
+          return {
+            ...test,
+            listeningSection: null,
+            readingSection: null,
+            answers: null,
+          };
+        }),
+      };
 
       return testsWithoutAnswer;
     }),
@@ -39,11 +44,19 @@ export const toeicTestsRouter = createTRPCRouter({
         throw new TRPCError({ code: "NOT_FOUND", message: "Test not found" });
       }
 
-      const testWithoutAnswer = {
+      return {
         ...testData,
+        listeningSection: {
+          ...testData.listeningSection,
+          parts: null,
+          partCount: testData.listeningSection.parts?.length,
+        },
+        readingSection: {
+          ...testData.readingSection,
+          parts: null,
+          partCount: testData.readingSection.parts?.length,
+        },
         answers: null,
       };
-
-      return testWithoutAnswer;
     }),
 });

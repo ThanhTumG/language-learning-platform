@@ -1,3 +1,4 @@
+import { Media } from "@/payload-types";
 import { createTRPCRouter, protectedProcedure } from "@/trpc/init";
 import { TRPCError } from "@trpc/server";
 import z from "zod";
@@ -39,12 +40,93 @@ export const toeicAttemptsRouter = createTRPCRouter({
         page: input.cursor,
         limit: input.limit,
         where: {
-          user: {
-            equals: ctx.session.user.id,
-          },
+          and: [
+            {
+              user: {
+                equals: ctx.session.user.id,
+              },
+              status: {
+                equals: "completed",
+              },
+            },
+          ],
         },
       });
 
       return attemptsData;
+    }),
+  create: protectedProcedure
+    .input(
+      z.object({
+        testId: z.string(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const testData = await ctx.db.findByID({
+        collection: "toeic",
+        id: input.testId,
+      });
+
+      if (!testData) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Test not found",
+        });
+      }
+
+      const attemptStartExisting = await ctx.db.find({
+        collection: "toeic-attempts",
+        limit: 1,
+        pagination: false,
+        where: {
+          and: [
+            {
+              user: {
+                equals: ctx.session.user.id,
+              },
+            },
+            {
+              test: {
+                equals: input.testId,
+              },
+            },
+            {
+              status: {
+                equals: "in_progress",
+              },
+            },
+          ],
+        },
+      });
+
+      if (attemptStartExisting.totalDocs === 0) {
+        const attemptNumber = await ctx.db.count({
+          collection: "toeic-attempts",
+          where: {
+            user: { equals: ctx.session.user.id },
+            test: { equals: testData.id },
+          },
+        });
+
+        await ctx.db.create({
+          collection: "toeic-attempts",
+          data: {
+            user: ctx.session.user.id,
+            test: testData.id,
+            attemptTitle: testData.title,
+            attemptNumber: attemptNumber.totalDocs + 1,
+            status: "in_progress",
+          },
+        });
+      }
+
+      return {
+        ...testData,
+        answers: null,
+        listeningSection: {
+          ...testData.listeningSection,
+          audioFile: testData.listeningSection.audioFile as Media | null,
+        },
+      };
     }),
 });

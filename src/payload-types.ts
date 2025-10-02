@@ -235,6 +235,7 @@ export interface Toeic {
                   | {
                       questionNumber: number;
                       questionText: string;
+                      imageFile?: (number | null) | Media;
                       options?:
                         | {
                             option: string;
@@ -546,6 +547,7 @@ export interface ToeicSelect<T extends boolean = true> {
                       | {
                           questionNumber?: T;
                           questionText?: T;
+                          imageFile?: T;
                           options?:
                             | T
                             | {
