@@ -15,7 +15,7 @@ import {
   Trophy,
 } from "lucide-react";
 import { Suspense, useMemo, useState } from "react";
-import { StatCard, StatCardSkeleton } from "../components/stat-card";
+import { StatCardSkeleton } from "../components/stat-card";
 import {
   Card,
   CardContent,
@@ -24,7 +24,22 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { AttemptCard, AttemptCardSkeleton } from "../components/attempt-card";
-import { SkillProgress } from "../components/skill-progress";
+import dynamic from "next/dynamic";
+
+const SkillProgress = dynamic(
+  () => import("../components/skill-progress").then((mod) => mod.SkillProgress),
+  {
+    ssr: false,
+  }
+);
+
+const StatCard = dynamic(
+  () => import("../components/stat-card").then((mod) => mod.StatCard),
+  {
+    ssr: false,
+    loading: () => <StatCardSkeleton />,
+  }
+);
 
 enum Skills {
   TOEIC = "toeic",
@@ -145,7 +160,7 @@ export const DashboardView = () => {
           </div>
           <div className="flex items-center gap-3">
             <Tabs value={skill} onValueChange={handleChangeSkill}>
-              <TabsList>
+              <TabsList className="bg-gray-200/50">
                 <TabsTrigger value="ielts">IELTS</TabsTrigger>
                 <TabsTrigger value="toeic">TOEIC</TabsTrigger>
               </TabsList>
@@ -163,19 +178,17 @@ export const DashboardView = () => {
       </div>
 
       {/* Stats Cards */}
-      <Suspense fallback={<StatCardsSkeleton />}>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {stats.map((stat) => (
-            <StatCard
-              key={stat.key as string}
-              title={stat.title}
-              content={stat.content as string}
-              note={stat.note}
-              Icon={stat.Icon}
-            />
-          ))}
-        </div>
-      </Suspense>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        {stats.map((stat) => (
+          <StatCard
+            key={stat.key as string}
+            title={stat.title}
+            content={stat.content as string}
+            note={stat.note}
+            Icon={stat.Icon}
+          />
+        ))}
+      </div>
 
       {/* Main Content Grid */}
       <div className="grid lg:grid-cols-3 gap-8">
@@ -239,7 +252,7 @@ export const DashboardView = () => {
                   skill={skill.skill}
                   color={skill.color}
                   target={skill.target}
-                  current={skill.current || 0}
+                  current={skill.current ?? 0}
                   Icon={skill.Icon}
                 />
               ))}
@@ -272,16 +285,6 @@ export const RecentTestSkeleton = () => {
     <div className="space-y-4">
       {Array.from({ length: DEFAULT_LIMIT }).map((_, index) => (
         <AttemptCardSkeleton key={index} />
-      ))}
-    </div>
-  );
-};
-
-export const StatCardsSkeleton = () => {
-  return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-      {Array.from({ length: 4 }).map((_, index) => (
-        <StatCardSkeleton key={index} />
       ))}
     </div>
   );

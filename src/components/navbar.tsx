@@ -37,7 +37,9 @@ const NavbarItem = ({ href, children, isActive }: NavbarItemProps) => {
         isActive && "bg-blue-600 text-white hover:bg-blue-600 hover:text-white"
       )}
     >
-      <Link href={href}>{children}</Link>
+      <Link prefetch href={href}>
+        {children}
+      </Link>
     </Button>
   );
 };

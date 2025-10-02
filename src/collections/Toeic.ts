@@ -227,6 +227,12 @@ export const Toeic: CollectionConfig = {
                       label: "Question text",
                     },
                     {
+                      name: "imageFile",
+                      type: "upload",
+                      relationTo: "media",
+                      label: "Image file (Part 1 only)",
+                    },
+                    {
                       name: "options",
                       type: "array",
                       label: "Options",
