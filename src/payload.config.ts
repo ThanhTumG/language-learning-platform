@@ -12,6 +12,8 @@ import { Media } from "./collections/Media";
 import { Toeic } from "./collections/Toeic";
 import { ToeicAttempt } from "./collections/ToeicAttempt";
 import { Progress } from "./collections/Progress";
+import { Exams } from "./collections/Exam";
+import { Classes } from "./collections/Class";
 
 const filename = fileURLToPath(import.meta.url);
 const dirname = path.dirname(filename);
@@ -23,7 +25,7 @@ export default buildConfig({
       baseDir: path.resolve(dirname),
     },
   },
-  collections: [Users, Media, Toeic, ToeicAttempt, Progress],
+  collections: [Users, Media, Toeic, ToeicAttempt, Progress, Exams, Classes],
   cookiePrefix: "langhub",
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || "",
