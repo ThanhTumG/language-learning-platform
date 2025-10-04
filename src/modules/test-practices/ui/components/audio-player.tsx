@@ -21,6 +21,7 @@ export const AudioPlayer = ({ audioSrc }: { audioSrc: string | undefined }) => {
   const handleLoadedMetadata = () => {
     if (audioRef.current) {
       setDuration(audioRef.current.duration);
+      console.log("loaded metadata, duration:", audioRef.current.duration);
     }
   };
 
@@ -36,12 +37,11 @@ export const AudioPlayer = ({ audioSrc }: { audioSrc: string | undefined }) => {
     }
   };
 
-  const handleSeek = (value: number[]) => {
-    if (audioRef.current) {
-      audioRef.current.currentTime = value[0];
-      setCurrentTime(value[0]);
-    }
-  };
+  // TODO: Implement when Payload supports Range requests (use cloud storage)
+  // const handleSeek = (value: number[]) => {
+  //   const newTime = value[0];
+  //   if (audioRef.current) audioRef.current.currentTime = newTime;
+  // };
 
   const handleVolumeChange = (value: number[]) => {
     const newVolume = value[0];
@@ -78,12 +78,10 @@ export const AudioPlayer = ({ audioSrc }: { audioSrc: string | undefined }) => {
     <Card className="p-4">
       <audio
         ref={audioRef}
-        src={audioSrc }
-        onTimeUpdate={handleTimeUpdate}
+        src={audioSrc}
         onLoadedMetadata={handleLoadedMetadata}
-        onEnded={() => setIsPlaying(false)}
+        onTimeUpdate={handleTimeUpdate}
       />
-
       {/* Simple Audio Controls */}
       <div className="flex items-center gap-4">
         {/* Play/Pause Button */}
@@ -106,8 +104,8 @@ export const AudioPlayer = ({ audioSrc }: { audioSrc: string | undefined }) => {
             value={[currentTime]}
             max={duration || 100}
             step={0.1}
-            onValueChange={handleSeek}
-            className="cursor-pointer"
+            // onValueChange={handleSeek}
+            className="cursor-not-allowed"
           />
           <div className="flex justify-between text-xs text-gray-500">
             <span>{formatAudioTime(currentTime)}</span>

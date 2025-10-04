@@ -42,7 +42,7 @@ interface testDataType {
 }
 
 function CountdownDisplay({ initial }: { initial: number }) {
-  const [, setTick] = React.useState(0); // chỉ trigger render nhẹ
+  const [, setTick] = React.useState(0);
   const time = React.useRef(initial);
 
   React.useEffect(() => {
@@ -66,8 +66,6 @@ export const TestStartView = ({ testType, testId }: Props) => {
   const [questionList, setQuestionList] = useState<QuestionType[]>([]);
   const [selectedQN, setSelectedQN] = useState<QuestionType | null>(null);
   const [answers, setAnswers] = useState<{ [key: number]: string }>({});
-
-  console.log("re-render");
 
   const isToeic = testType === "toeic";
 

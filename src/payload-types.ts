@@ -72,6 +72,8 @@ export interface Config {
     toeic: Toeic;
     'toeic-attempts': ToeicAttempt;
     progress: Progress;
+    exams: Exam;
+    classes: Class;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
     'payload-migrations': PayloadMigration;
@@ -83,6 +85,8 @@ export interface Config {
     toeic: ToeicSelect<false> | ToeicSelect<true>;
     'toeic-attempts': ToeicAttemptsSelect<false> | ToeicAttemptsSelect<true>;
     progress: ProgressSelect<false> | ProgressSelect<true>;
+    exams: ExamsSelect<false> | ExamsSelect<true>;
+    classes: ClassesSelect<false> | ClassesSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
     'payload-migrations': PayloadMigrationsSelect<false> | PayloadMigrationsSelect<true>;
@@ -127,6 +131,8 @@ export interface User {
   id: number;
   fullname: string;
   avatar?: (number | null) | Media;
+  class?: (number | Class)[] | null;
+  roles?: ('super-admin' | 'business' | 'user')[] | null;
   updatedAt: string;
   createdAt: string;
   email: string;
@@ -166,6 +172,38 @@ export interface Media {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "classes".
+ */
+export interface Class {
+  id: number;
+  name: string;
+  student?: (number | User)[] | null;
+  user: number | User;
+  exams?: (number | Exam)[] | null;
+  /**
+   * Upload student file (csv)
+   */
+  csvFile?: (number | null) | Media;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "exams".
+ */
+export interface Exam {
+  id: number;
+  title: string;
+  description?: string | null;
+  test?: (number | null) | Toeic;
+  results?: (number | ToeicAttempt)[] | null;
+  startTime: string;
+  endTime: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "toeic".
  */
 export interface Toeic {
@@ -175,83 +213,53 @@ export interface Toeic {
   duration: number;
   totalQuestions: number;
   difficulty?: ('easy' | 'medium' | 'hard') | null;
-  listeningSection: {
-    duration: number;
-    totalQuestions: number;
-    audioFile: number | Media;
-    parts?:
-      | {
-          partNumber: number;
-          title: string;
-          description?: string | null;
-          questionCount: number;
-          questions?:
-            | {
-                questionNumber: number;
-                questionText?: string | null;
-                imageFile?: (number | null) | Media;
-                options?:
-                  | {
-                      option: string;
-                      id?: string | null;
-                    }[]
-                  | null;
-                id?: string | null;
-              }[]
-            | null;
-          id?: string | null;
-        }[]
-      | null;
-  };
-  readingSection: {
-    duration: number;
-    totalQuestions: number;
-    parts?:
-      | {
-          partNumber: number;
-          title: string;
-          description?: string | null;
-          questionCount: number;
-          passages?:
-            | {
-                passageNumber: number;
-                title?: string | null;
-                content?: {
-                  root: {
-                    type: string;
-                    children: {
-                      type: any;
-                      version: number;
-                      [k: string]: unknown;
-                    }[];
-                    direction: ('ltr' | 'rtl') | null;
-                    format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
-                    indent: number;
+  audioFile?: (number | null) | Media;
+  parts?:
+    | {
+        partNumber: number;
+        title: string;
+        description?: string | null;
+        sectionType: 'listening' | 'reading';
+        questionCount: number;
+        questionItems?:
+          | {
+              itemType: 'single' | 'group';
+              itemNumber: number;
+              imageFile?: (number | null) | Media;
+              passageContent?: {
+                root: {
+                  type: string;
+                  children: {
+                    type: any;
                     version: number;
-                  };
-                  [k: string]: unknown;
-                } | null;
-                questions?:
-                  | {
-                      questionNumber: number;
-                      questionText: string;
-                      imageFile?: (number | null) | Media;
-                      options?:
-                        | {
-                            option: string;
-                            id?: string | null;
-                          }[]
-                        | null;
-                      id?: string | null;
-                    }[]
-                  | null;
-                id?: string | null;
-              }[]
-            | null;
-          id?: string | null;
-        }[]
-      | null;
-  };
+                    [k: string]: unknown;
+                  }[];
+                  direction: ('ltr' | 'rtl') | null;
+                  format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+                  indent: number;
+                  version: number;
+                };
+                [k: string]: unknown;
+              } | null;
+              questions?:
+                | {
+                    questionNumber: number;
+                    questionText: string;
+                    options?:
+                      | {
+                          optionText: string;
+                          id?: string | null;
+                        }[]
+                      | null;
+                    id?: string | null;
+                  }[]
+                | null;
+              id?: string | null;
+            }[]
+          | null;
+        id?: string | null;
+      }[]
+    | null;
   answers?:
     | {
         ordinal: number;
@@ -399,6 +407,14 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'progress';
         value: number | Progress;
+      } | null)
+    | ({
+        relationTo: 'exams';
+        value: number | Exam;
+      } | null)
+    | ({
+        relationTo: 'classes';
+        value: number | Class;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -449,6 +465,8 @@ export interface PayloadMigration {
 export interface UsersSelect<T extends boolean = true> {
   fullname?: T;
   avatar?: T;
+  class?: T;
+  roles?: T;
   updatedAt?: T;
   createdAt?: T;
   email?: T;
@@ -494,72 +512,38 @@ export interface ToeicSelect<T extends boolean = true> {
   duration?: T;
   totalQuestions?: T;
   difficulty?: T;
-  listeningSection?:
+  audioFile?: T;
+  parts?:
     | T
     | {
-        duration?: T;
-        totalQuestions?: T;
-        audioFile?: T;
-        parts?:
+        partNumber?: T;
+        title?: T;
+        description?: T;
+        sectionType?: T;
+        questionCount?: T;
+        questionItems?:
           | T
           | {
-              partNumber?: T;
-              title?: T;
-              description?: T;
-              questionCount?: T;
+              itemType?: T;
+              itemNumber?: T;
+              imageFile?: T;
+              passageContent?: T;
               questions?:
                 | T
                 | {
                     questionNumber?: T;
                     questionText?: T;
-                    imageFile?: T;
                     options?:
                       | T
                       | {
-                          option?: T;
+                          optionText?: T;
                           id?: T;
                         };
                     id?: T;
                   };
               id?: T;
             };
-      };
-  readingSection?:
-    | T
-    | {
-        duration?: T;
-        totalQuestions?: T;
-        parts?:
-          | T
-          | {
-              partNumber?: T;
-              title?: T;
-              description?: T;
-              questionCount?: T;
-              passages?:
-                | T
-                | {
-                    passageNumber?: T;
-                    title?: T;
-                    content?: T;
-                    questions?:
-                      | T
-                      | {
-                          questionNumber?: T;
-                          questionText?: T;
-                          imageFile?: T;
-                          options?:
-                            | T
-                            | {
-                                option?: T;
-                                id?: T;
-                              };
-                          id?: T;
-                        };
-                    id?: T;
-                  };
-              id?: T;
-            };
+        id?: T;
       };
   answers?:
     | T
@@ -695,6 +679,33 @@ export interface ProgressSelect<T extends boolean = true> {
     | {
         targetScore?: T;
       };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "exams_select".
+ */
+export interface ExamsSelect<T extends boolean = true> {
+  title?: T;
+  description?: T;
+  test?: T;
+  results?: T;
+  startTime?: T;
+  endTime?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "classes_select".
+ */
+export interface ClassesSelect<T extends boolean = true> {
+  name?: T;
+  student?: T;
+  user?: T;
+  exams?: T;
+  csvFile?: T;
   updatedAt?: T;
   createdAt?: T;
 }
