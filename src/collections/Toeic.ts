@@ -58,18 +58,6 @@ export const Toeic: CollectionConfig = {
       label: "Parts",
       fields: [
         {
-          name: "partNumber",
-          type: "number",
-          required: true,
-          label: "Part number",
-        },
-        {
-          name: "title",
-          type: "text",
-          required: true,
-          label: "Part title",
-        },
-        {
           name: "description",
           type: "textarea",
           label: "Part description",
@@ -97,31 +85,8 @@ export const Toeic: CollectionConfig = {
           label: "Question items (single questions or question groups)",
           fields: [
             {
-              name: "itemType",
-              type: "select",
-              required: true,
-              options: [
-                { label: "Single Question", value: "single" },
-                { label: "Question Group", value: "group" },
-              ],
-              defaultValue: "single",
-              label: "Item type",
-            },
-            {
-              name: "itemNumber",
-              type: "number",
-              required: true,
-            },
-            {
-              name: "imageFile",
-              type: "upload",
-              relationTo: "media",
-              label: "Image file",
-            },
-            {
-              name: "passageContent",
+              name: "questionContent",
               type: "richText",
-              label: "Passage content (for reading groups)",
             },
             {
               name: "questions",
@@ -137,7 +102,6 @@ export const Toeic: CollectionConfig = {
                 {
                   name: "questionText",
                   type: "textarea",
-                  required: true,
                 },
                 {
                   name: "options",
@@ -172,9 +136,9 @@ export const Toeic: CollectionConfig = {
         },
         {
           name: "answer",
-          type: "text",
+          type: "number",
           required: true,
-          label: "Answer",
+          label: "Answer (index starting from 1)",
         },
         {
           name: "explanation",
@@ -216,16 +180,6 @@ export const Toeic: CollectionConfig = {
       type: "group",
       label: "Additional data",
       fields: [
-        {
-          name: "level",
-          type: "select",
-          options: [
-            { label: "Beginner", value: "beginner" },
-            { label: "Intermediate", value: "intermediate" },
-            { label: "Advanced", value: "advanced" },
-          ],
-          label: "Level",
-        },
         {
           name: "tags",
           type: "array",

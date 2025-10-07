@@ -1,19 +1,25 @@
 import { inferRouterOutputs } from "@trpc/server";
 
 import type { AppRouter } from "@/trpc/routers/_app";
-import { Media } from "@/payload-types";
+import type { SerializedEditorState } from "@payloadcms/richtext-lexical/lexical";
 
 export type ToeicAttemptsCreateOutput =
   inferRouterOutputs<AppRouter>["toeicAttempts"]["create"];
 
-export type QuestionType = {
-  type: "listen" | "write" | "read" | "speak";
-  questionNumber: number;
-  questionText?: string | null;
-  imageFile?: (number | null) | Media;
-  options?:
+export type ToeicAttemptsPartOutput = ToeicAttemptsCreateOutput["parts"];
+
+export type ToeicAttemptsQuestionItemOutput = {
+  questionContent?: SerializedEditorState | null;
+  questions?:
     | {
-        option: string;
+        questionNumber: number;
+        questionText?: string | null;
+        options?:
+          | {
+              optionText: string;
+              id?: string | null;
+            }[]
+          | null;
         id?: string | null;
       }[]
     | null;

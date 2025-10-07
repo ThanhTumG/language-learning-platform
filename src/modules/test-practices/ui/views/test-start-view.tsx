@@ -2,9 +2,8 @@
 
 import { useTRPC } from "@/trpc/client";
 import { useMutation } from "@tanstack/react-query";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { QuestionType } from "@/modules/toeic-attempts/type";
 import {
   ArrowLeft,
   ArrowRight,
@@ -15,8 +14,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { formatTime } from "@/lib/utils";
 import { Progress } from "@/components/ui/progress";
-import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   Card,
   CardContent,
@@ -25,6 +22,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { AudioPlayer } from "../components/audio-player";
+import { ToeicAttemptsQuestionItemOutput } from "@/modules/toeic-attempts/type";
+import { QuestionItemCard } from "../components/question-item-card";
 
 interface Props {
   testType: string;
@@ -33,12 +32,19 @@ interface Props {
 
 interface testDataType {
   id: number;
+  audio?: string | undefined;
   title: string;
   description?: string | null;
   duration: number;
   totalQuestions: number;
   difficulty?: ("easy" | "medium" | "hard") | null;
-  audio?: string;
+  parts?: formattedTestPartsType[];
+}
+
+interface formattedTestPartsType {
+  partNumber: number;
+  questionCount: number;
+  questionItem: number[];
 }
 
 function CountdownDisplay({ initial }: { initial: number }) {
@@ -61,55 +67,45 @@ function CountdownDisplay({ initial }: { initial: number }) {
   );
 }
 
-export const TestStartView = ({ testType, testId }: Props) => {
+export const TestStartView = ({ testId }: Props) => {
   const [testData, setTestData] = useState<testDataType | null>(null);
-  const [questionList, setQuestionList] = useState<QuestionType[]>([]);
-  const [selectedQN, setSelectedQN] = useState<QuestionType | null>(null);
-  const [answers, setAnswers] = useState<{ [key: number]: string }>({});
+  const [questionList, setQuestionList] = useState<
+    ToeicAttemptsQuestionItemOutput[]
+  >([]);
+  const [selectedQN, setSelectedQN] = useState<number>(1);
+  const [answers, setAnswers] = useState<{ [key: number]: number }>({});
 
-  const isToeic = testType === "toeic";
+  // const isToeic = testType === "toeic";
 
   const trpc = useTRPC();
   const startTestMutation = useMutation({
     ...trpc.toeicAttempts.create.mutationOptions({
       onSuccess: (data) => {
-        if (isToeic) {
-          const listeningQN: QuestionType[] =
-            data.listeningSection.parts
-              ?.flatMap((part) =>
-                (part?.questions ?? []).map((q) =>
-                  q ? { ...q, type: "listen" } : undefined
-                )
-              )
-              .filter((q): q is QuestionType => q !== undefined) ?? [];
+        const formattedTestParts =
+          data?.parts?.map((part, index) => ({
+            partNumber: index + 1,
+            questionCount: part.questionCount,
+            questionItem:
+              part.questionItems?.flatMap(
+                (qi) => qi.questions?.map((q) => q.questionNumber) ?? 0
+              ) ?? [],
+          })) ?? [];
 
-          const readingQN: QuestionType[] =
-            data.readingSection.parts
-              ?.flatMap((part) =>
-                (part.passages ?? []).flatMap((passage) =>
-                  (passage.questions ?? []).map((q) =>
-                    q ? ({ ...q, type: "read" } as QuestionType) : undefined
-                  )
-                )
-              )
-              .filter((q): q is QuestionType => q !== null) ?? [];
+        const questionItems =
+          data.parts?.flatMap((part) => part.questionItems ?? []) ?? [];
+        console.log("questionItems", formattedTestParts);
 
-          const questions = [...listeningQN, ...readingQN];
-
-          if (questions.length > 0) {
-            setSelectedQN(questions[0]);
-          }
-          setQuestionList(questions);
-        }
+        setQuestionList(questionItems);
 
         setTestData({
           id: data.id,
+          audio: data.audioFile?.url ?? undefined,
           duration: data.duration,
           title: data.title,
           totalQuestions: data.totalQuestions,
           description: data.description,
           difficulty: data.difficulty,
-          audio: data.listeningSection.audioFile?.url ?? undefined,
+          parts: formattedTestParts,
         });
       },
       onError: (error) => {
@@ -118,25 +114,34 @@ export const TestStartView = ({ testType, testId }: Props) => {
     }),
   });
 
-  const updateAnswer = (questionId: number | null, answer: string) => {
+  const updateAnswer = (questionId: number, answer: number) => {
     if (questionId === null) return;
     setAnswers({ ...answers, [questionId]: answer });
   };
 
   const gotoQuestion = (questionNumber: number) => {
-    setSelectedQN(
-      questionList.find((q) => q.questionNumber === questionNumber) || null
+    const questionItem = questionList.find((item) =>
+      item.questions?.some((q) => q.questionNumber === questionNumber)
     );
+    if (!questionItem) return;
+    const qnIndex = questionList.indexOf(questionItem);
+    if (qnIndex === -1) return;
+    setSelectedQN(qnIndex + 1);
   };
 
+  const handleFinishTest = () => {
+    console.log("Finish Test", answers);
+  };
+
+  const attemptCreatedRef = React.useRef(false);
+
   useEffect(() => {
-    if (isToeic) {
+    if (!attemptCreatedRef.current) {
       startTestMutation.mutate({ testId });
+      attemptCreatedRef.current = true;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [testId, isToeic]);
-
-  const memoAudioSrc = useMemo(() => testData?.audio, [testData?.audio]);
+  }, []);
 
   return (
     <div className="min-h-screen">
@@ -176,8 +181,7 @@ export const TestStartView = ({ testType, testId }: Props) => {
             <Progress
               value={
                 questionList.length > 0
-                  ? ((selectedQN?.questionNumber ?? 0) / questionList.length) *
-                    100
+                  ? (selectedQN / questionList.length) * 100
                   : 0
               }
               className="h-2"
@@ -192,71 +196,39 @@ export const TestStartView = ({ testType, testId }: Props) => {
           {/* Main Content */}
           <div className="flex-1 min-w-0 space-y-6">
             {/* Audio */}
-            <AudioPlayer audioSrc={memoAudioSrc} />
-            <Card>
-              <CardContent className="space-y-6">
-                <div className="border-l-4 border-blue-500 pl-4">
-                  <Label className="font-medium">
-                    Question {selectedQN?.questionNumber}
-                  </Label>
-                  <p className="text-gray-700 mb-4">
-                    {selectedQN?.questionText}
-                  </p>
-                  <RadioGroup
-                    value={answers[selectedQN?.questionNumber ?? -1] || ""}
-                    onValueChange={(value) =>
-                      updateAnswer(selectedQN?.questionNumber ?? null, value)
-                    }
-                  >
-                    {selectedQN?.options?.map((option, index) => (
-                      <div
-                        key={index}
-                        className="flex items-center space-x-2 mb-3"
-                      >
-                        <RadioGroupItem
-                          value={`${index}`}
-                          id={`${index + 1}`}
-                        />
-                        <Label htmlFor={`${index + 1}`}>{option.option}</Label>
-                      </div>
-                    ))}
-                  </RadioGroup>
-                </div>
-              </CardContent>
-            </Card>
+            <AudioPlayer audioSrc={testData?.audio} />
+            {/* Question */}
+            {questionList.length > 0 && (
+              <QuestionItemCard
+                questionItem={questionList[selectedQN - 1]}
+                updateAnswer={updateAnswer}
+                answers={answers}
+              />
+            )}
 
             {/* Navigation */}
             <div className="flex justify-between items-center mt-8">
               <Button
                 variant="outline"
-                onClick={() =>
-                  setSelectedQN(
-                    questionList[
-                      Math.max((selectedQN?.questionNumber ?? 0) - 2, 0)
-                    ]
-                  )
-                }
+                onClick={() => setSelectedQN(Math.max(selectedQN - 1, 0))}
               >
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Previous
               </Button>
 
               <div className="text-sm text-gray-600">
-                Question {selectedQN?.questionNumber ?? 0} of{" "}
-                {questionList.length}
+                Question {selectedQN} of {testData?.totalQuestions ?? 0}
               </div>
               <Button
                 onClick={() => {
-                  if ((selectedQN?.questionNumber ?? 0) < questionList.length) {
-                    setSelectedQN(
-                      questionList[selectedQN?.questionNumber ?? 0]
-                    );
+                  if (selectedQN < questionList.length) {
+                    setSelectedQN(selectedQN + 1);
                   } else {
-                    // handleFinishTest();
+                    handleFinishTest();
                   }
                 }}
               >
-                {(selectedQN?.questionNumber ?? 0) < questionList.length ? (
+                {selectedQN < questionList.length ? (
                   <>
                     Next
                     <ArrowRight className="h-4 w-4" />
@@ -280,39 +252,37 @@ export const TestStartView = ({ testType, testId }: Props) => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-5 gap-2 max-h-[calc(100vh-16rem)] overflow-y-auto p-2">
-                  {Array.from({ length: questionList.length }, (_, i) => {
-                    const isAnswered =
-                      answers[i + 1] !== undefined && answers[i + 1] !== "";
-                    const isCurrent =
-                      i === (selectedQN?.questionNumber ?? 1) - 1;
-                    return (
-                      <Button
-                        key={i}
-                        variant={
-                          isCurrent
-                            ? "default"
-                            : isAnswered
-                            ? "secondary"
-                            : "outline"
-                        }
-                        size="sm"
-                        onClick={() => gotoQuestion(i + 1)}
-                        className={`relative ${
-                          isCurrent
-                            ? "ring-2 ring-offset-2 ring-primary"
-                            : isAnswered
-                            ? "bg-cyan-100 hover:bg-cyan-200 text-cyan-900 border-cyan-300"
-                            : ""
-                        }`}
-                      >
-                        {i + 1}
-                        {isAnswered && !isCurrent && (
-                          <CheckCircle className="absolute -top-1 -right-1 h-4 w-4 text-cyan-600 bg-white rounded-full" />
-                        )}
-                      </Button>
-                    );
-                  })}
+                <div className="max-h-[calc(100vh-16rem)] overflow-y-auto p-2">
+                  {testData?.parts?.map((part) => (
+                    <div key={part.partNumber} className="col-span-5">
+                      <h3 className="font-semibold mb-2">
+                        Part {part.partNumber}
+                      </h3>
+                      <div className="grid grid-cols-5 gap-2">
+                        {part.questionItem.map((qn) => {
+                          const isAnswered = answers[qn] !== undefined;
+                          return (
+                            <Button
+                              key={qn}
+                              variant={isAnswered ? "secondary" : "outline"}
+                              size="sm"
+                              onClick={() => gotoQuestion(qn)}
+                              className={`relative ${
+                                isAnswered
+                                  ? "bg-cyan-100 hover:bg-cyan-200 text-cyan-900 border-cyan-300"
+                                  : ""
+                              }`}
+                            >
+                              {qn}
+                              {isAnswered && (
+                                <CheckCircle className="absolute -top-1 -right-1 h-4 w-4 text-cyan-600 bg-white rounded-full" />
+                              )}
+                            </Button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </CardContent>
             </Card>

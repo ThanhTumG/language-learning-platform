@@ -16,21 +16,14 @@ export const toeicTestsRouter = createTRPCRouter({
         sort: "-createdAt",
         limit: input.limit,
         page: input.cursor,
+        select: {
+          audioFile: false,
+          answers: false,
+          parts: false,
+        },
       });
 
-      const testsWithoutAnswer = {
-        ...testsData,
-        docs: testsData.docs.map((test) => {
-          return {
-            ...test,
-            listeningSection: null,
-            readingSection: null,
-            answers: null,
-          };
-        }),
-      };
-
-      return testsWithoutAnswer;
+      return testsData;
     }),
   getOne: baseProcedure
     .input(z.object({ testId: z.string() }))
@@ -38,25 +31,19 @@ export const toeicTestsRouter = createTRPCRouter({
       const testData = await ctx.db.findByID({
         collection: "toeic",
         id: input.testId,
+        select: {
+          audioFile: false,
+          answers: false,
+          parts: {
+            questionItems: false,
+          },
+        },
       });
 
       if (!testData) {
         throw new TRPCError({ code: "NOT_FOUND", message: "Test not found" });
       }
 
-      return {
-        ...testData,
-        listeningSection: {
-          ...testData.listeningSection,
-          parts: null,
-          partCount: testData.listeningSection.parts?.length,
-        },
-        readingSection: {
-          ...testData.readingSection,
-          parts: null,
-          partCount: testData.readingSection.parts?.length,
-        },
-        answers: null,
-      };
+      return testData;
     }),
 });
