@@ -62,9 +62,13 @@ export const toeicAttemptsRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
+      console.log("Creating TOEIC attempt for testId:", input.testId);
       const testData = await ctx.db.findByID({
         collection: "toeic",
         id: input.testId,
+        select: {
+          answers: false,
+        },
       });
 
       if (!testData) {
@@ -122,11 +126,7 @@ export const toeicAttemptsRouter = createTRPCRouter({
 
       return {
         ...testData,
-        answers: null,
-        listeningSection: {
-          ...testData.listeningSection,
-          audioFile: testData.listeningSection.audioFile as Media | null,
-        },
+        audioFile: testData.audioFile as Media | null,
       };
     }),
 });

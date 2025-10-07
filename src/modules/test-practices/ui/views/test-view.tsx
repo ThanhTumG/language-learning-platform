@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/card";
 import { useTRPC } from "@/trpc/client";
 import { useQuery } from "@tanstack/react-query";
-import { BookOpen, CheckCircle2, Clock, Play } from "lucide-react";
+import { BookOpen, CheckCircle2, Play } from "lucide-react";
 import Link from "next/link";
 
 interface Props {
@@ -83,7 +83,6 @@ export const TestView = ({ testType, testId }: Props) => {
           <Button size="lg">
             <Link
               className="w-full md:w-auto flex items-center gap-2"
-              prefetch
               href={`/test-practices/${testType}/${testId}/start`}
             >
               <Play className="h-5 w-5" />
@@ -99,21 +98,15 @@ export const TestView = ({ testType, testId }: Props) => {
           <h2 className="mb-4">Test Sections</h2>
         </div>
 
-        <TestSection
-          name="Listening"
-          description={`${data?.listeningSection.partCount} sections`}
-          index={1}
-          duration={data?.listeningSection.duration ?? 0}
-          questionCount={data?.listeningSection.totalQuestions ?? 0}
-        />
-
-        <TestSection
-          name="Reading"
-          description={`${data?.readingSection.partCount} sections`}
-          index={2}
-          duration={data?.readingSection.duration ?? 0}
-          questionCount={data?.readingSection.totalQuestions ?? 0}
-        />
+        {data?.parts?.map((part, index) => (
+          <TestSection
+            key={part.id}
+            index={index + 1}
+            name={`Part ${index + 1}`}
+            description={part.description ?? ""}
+            questionCount={part.questionCount}
+          />
+        ))}
       </div>
 
       {/* Instructions */}
@@ -162,14 +155,12 @@ interface TestSectionProps {
   name: string;
   description: string;
   questionCount: number;
-  duration: number;
 }
 
 export const TestSection = ({
   index,
   name,
   description,
-  duration,
   questionCount,
 }: TestSectionProps) => {
   return (
@@ -196,13 +187,6 @@ export const TestSection = ({
             <span className="text-sm">
               <span className="text-muted-foreground">Questions:</span>{" "}
               {questionCount}
-            </span>
-          </div>
-          <div className="flex items-center gap-2">
-            <Clock className="h-4 w-4 text-muted-foreground" />
-            <span className="text-sm">
-              <span className="text-muted-foreground">Time:</span> {duration}{" "}
-              minutes
             </span>
           </div>
         </div>

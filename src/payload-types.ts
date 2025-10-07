@@ -216,17 +216,12 @@ export interface Toeic {
   audioFile?: (number | null) | Media;
   parts?:
     | {
-        partNumber: number;
-        title: string;
         description?: string | null;
         sectionType: 'listening' | 'reading';
         questionCount: number;
         questionItems?:
           | {
-              itemType: 'single' | 'group';
-              itemNumber: number;
-              imageFile?: (number | null) | Media;
-              passageContent?: {
+              questionContent?: {
                 root: {
                   type: string;
                   children: {
@@ -244,7 +239,7 @@ export interface Toeic {
               questions?:
                 | {
                     questionNumber: number;
-                    questionText: string;
+                    questionText?: string | null;
                     options?:
                       | {
                           optionText: string;
@@ -263,7 +258,7 @@ export interface Toeic {
   answers?:
     | {
         ordinal: number;
-        answer: string;
+        answer: number;
         explanation?: string | null;
         id?: string | null;
       }[]
@@ -274,7 +269,6 @@ export interface Toeic {
     totalMaxScore: number;
   };
   metadata?: {
-    level?: ('beginner' | 'intermediate' | 'advanced') | null;
     tags?:
       | {
           tag: string;
@@ -516,18 +510,13 @@ export interface ToeicSelect<T extends boolean = true> {
   parts?:
     | T
     | {
-        partNumber?: T;
-        title?: T;
         description?: T;
         sectionType?: T;
         questionCount?: T;
         questionItems?:
           | T
           | {
-              itemType?: T;
-              itemNumber?: T;
-              imageFile?: T;
-              passageContent?: T;
+              questionContent?: T;
               questions?:
                 | T
                 | {
@@ -563,7 +552,6 @@ export interface ToeicSelect<T extends boolean = true> {
   metadata?:
     | T
     | {
-        level?: T;
         tags?:
           | T
           | {
