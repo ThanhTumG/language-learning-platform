@@ -1,3 +1,4 @@
+import { Part } from "@/payload-types";
 import { baseProcedure, createTRPCRouter } from "@/trpc/init";
 import { TRPCError } from "@trpc/server";
 import z from "zod";
@@ -16,6 +17,11 @@ export const toeicTestsRouter = createTRPCRouter({
         sort: "-createdAt",
         limit: input.limit,
         page: input.cursor,
+        where: {
+          "metadata.isPublished": {
+            equals: true,
+          },
+        },
         select: {
           audioFile: false,
           answers: false,
@@ -34,16 +40,24 @@ export const toeicTestsRouter = createTRPCRouter({
         select: {
           audioFile: false,
           answers: false,
-          parts: {
-            questionItems: false,
-          },
         },
       });
 
-      if (!testData) {
+      if (!testData || testData.metadata?.isPublished !== true) {
         throw new TRPCError({ code: "NOT_FOUND", message: "Test not found" });
       }
 
-      return testData;
+      const parts = Array.isArray(testData.parts)
+        ? testData.parts.map((part) =>
+            typeof part === "object" && part !== null
+              ? { ...part, questionItems: undefined }
+              : part
+          )
+        : [];
+
+      return {
+        ...testData,
+        parts: parts as Part[] | [],
+      };
     }),
 });

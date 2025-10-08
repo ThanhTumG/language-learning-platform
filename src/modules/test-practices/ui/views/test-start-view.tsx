@@ -47,33 +47,34 @@ interface formattedTestPartsType {
   questionItem: number[];
 }
 
-function CountdownDisplay({ initial }: { initial: number }) {
+function CountdownDisplay({ endAt }: { endAt: number }) {
   const [, setTick] = React.useState(0);
-  const time = React.useRef(initial);
 
   React.useEffect(() => {
     const interval = setInterval(() => {
-      time.current -= 1;
-      setTick((t) => t + 1); // chỉ trigger re-render phần nhỏ này
-      if (time.current <= 0) clearInterval(interval);
+      setTick((t) => t + 1); // trigger re-render
+      if (Date.now() >= endAt) clearInterval(interval);
     }, 1000);
     return () => clearInterval(interval);
-  }, []);
+  }, [endAt]);
 
+  const remainingSec = Math.max(0, Math.ceil((endAt - Date.now()) / 1000));
   return (
     <div className="text-2xl font-bold text-red-600">
-      {formatTime(time.current)}
+      {formatTime(remainingSec)}
     </div>
   );
 }
 
 export const TestStartView = ({ testId }: Props) => {
   const [testData, setTestData] = useState<testDataType | null>(null);
-  const [questionList, setQuestionList] = useState<
+  const [questionItemList, setQuestionItemList] = useState<
     ToeicAttemptsQuestionItemOutput[]
   >([]);
+  const [selectedQNItem, setSelectedQNItem] = useState<number>(1);
   const [selectedQN, setSelectedQN] = useState<number>(1);
   const [answers, setAnswers] = useState<{ [key: number]: number }>({});
+  const [endAt, setEndAt] = useState<number | null>(null);
 
   // const isToeic = testType === "toeic";
 
@@ -93,9 +94,8 @@ export const TestStartView = ({ testId }: Props) => {
 
         const questionItems =
           data.parts?.flatMap((part) => part.questionItems ?? []) ?? [];
-        console.log("questionItems", formattedTestParts);
 
-        setQuestionList(questionItems);
+        setQuestionItemList(questionItems);
 
         setTestData({
           id: data.id,
@@ -120,13 +120,17 @@ export const TestStartView = ({ testId }: Props) => {
   };
 
   const gotoQuestion = (questionNumber: number) => {
-    const questionItem = questionList.find((item) =>
+    const questionItem = questionItemList.find((item) =>
       item.questions?.some((q) => q.questionNumber === questionNumber)
     );
     if (!questionItem) return;
-    const qnIndex = questionList.indexOf(questionItem);
-    if (qnIndex === -1) return;
-    setSelectedQN(qnIndex + 1);
+    const qnItemIndex = questionItemList.indexOf(questionItem);
+    const qnIndex = questionItem.questions
+      ? questionItem.questions[questionItem.questions.length - 1].questionNumber
+      : 0;
+    if (qnItemIndex === -1 || qnIndex === -1) return;
+    setSelectedQN(qnIndex);
+    setSelectedQNItem(qnItemIndex + 1);
   };
 
   const handleFinishTest = () => {
@@ -147,7 +151,7 @@ export const TestStartView = ({ testId }: Props) => {
     <div className="min-h-screen">
       {/* Test Header */}
       <div className="bg-white border-b sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4">
+        <div className="mx-auto px-10 py-4 max-w-screen-2xl">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div
@@ -156,7 +160,7 @@ export const TestStartView = ({ testId }: Props) => {
                 <ScrollText className="w-8 h-8 text-gray-800" />
               </div>
               <div>
-                <h1 className="font-bold">{testData?.title}</h1>
+                <h1 className="font-semibold">{testData?.title}</h1>
                 <p className="text-sm text-gray-600 capitalize">
                   {testData?.difficulty} difficulty
                 </p>
@@ -164,9 +168,7 @@ export const TestStartView = ({ testId }: Props) => {
             </div>
             <div className="flex items-center gap-4">
               <div className="text-center">
-                {testData?.duration && (
-                  <CountdownDisplay initial={testData?.duration * 60} />
-                )}
+                {endAt && <CountdownDisplay endAt={endAt} />}
                 <p className="text-xs text-gray-500">Time Remaining</p>
               </div>
               <Button variant="destructive" onClick={() => {}}>
@@ -180,8 +182,8 @@ export const TestStartView = ({ testId }: Props) => {
           <div className="mt-4">
             <Progress
               value={
-                questionList.length > 0
-                  ? (selectedQN / questionList.length) * 100
+                testData?.totalQuestions && testData?.totalQuestions > 0
+                  ? (selectedQN / testData?.totalQuestions) * 100
                   : 0
               }
               className="h-2"
@@ -191,16 +193,20 @@ export const TestStartView = ({ testId }: Props) => {
       </div>
 
       {/* Test Content */}
-      <div className="container mx-auto px-4 py-8 max-w-7xl">
+      <div className="mx-auto px-4 py-8 max-w-screen-2xl">
         <div className="flex gap-6">
-          {/* Main Content */}
           <div className="flex-1 min-w-0 space-y-6">
             {/* Audio */}
-            <AudioPlayer audioSrc={testData?.audio} />
+            <AudioPlayer
+              audioSrc={testData?.audio}
+              onReady={() =>
+                setEndAt(Date.now() + (testData?.duration ?? 0) * 60 * 1000)
+              }
+            />
             {/* Question */}
-            {questionList.length > 0 && (
+            {questionItemList.length > 0 && (
               <QuestionItemCard
-                questionItem={questionList[selectedQN - 1]}
+                questionItem={questionItemList[selectedQNItem - 1]}
                 updateAnswer={updateAnswer}
                 answers={answers}
               />
@@ -210,25 +216,36 @@ export const TestStartView = ({ testId }: Props) => {
             <div className="flex justify-between items-center mt-8">
               <Button
                 variant="outline"
-                onClick={() => setSelectedQN(Math.max(selectedQN - 1, 0))}
+                disabled={selectedQNItem === 1}
+                onClick={() =>
+                  gotoQuestion(
+                    questionItemList[
+                      selectedQNItem > 1 ? selectedQNItem - 2 : 0
+                    ]?.questions?.[0]?.questionNumber ?? 1
+                  )
+                }
               >
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Previous
               </Button>
-
-              <div className="text-sm text-gray-600">
-                Question {selectedQN} of {testData?.totalQuestions ?? 0}
-              </div>
+              {
+                <div className="text-sm text-gray-600">
+                  Question {selectedQN} of {testData?.totalQuestions ?? 0}
+                </div>
+              }
               <Button
                 onClick={() => {
-                  if (selectedQN < questionList.length) {
-                    setSelectedQN(selectedQN + 1);
+                  if (selectedQNItem < questionItemList.length) {
+                    gotoQuestion(
+                      questionItemList[selectedQNItem]?.questions?.[0]
+                        ?.questionNumber ?? 1
+                    );
                   } else {
                     handleFinishTest();
                   }
                 }}
               >
-                {selectedQN < questionList.length ? (
+                {selectedQNItem < questionItemList.length ? (
                   <>
                     Next
                     <ArrowRight className="h-4 w-4" />
@@ -243,6 +260,7 @@ export const TestStartView = ({ testId }: Props) => {
             </div>
           </div>
 
+          {/* Questions navigation */}
           <div className="w-80 flex-shrink-0">
             <Card className="sticky top-24">
               <CardHeader>

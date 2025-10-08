@@ -1,4 +1,4 @@
-import { Media } from "@/payload-types";
+import { Media, Part } from "@/payload-types";
 import { createTRPCRouter, protectedProcedure } from "@/trpc/init";
 import { TRPCError } from "@trpc/server";
 import z from "zod";
@@ -62,7 +62,6 @@ export const toeicAttemptsRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      console.log("Creating TOEIC attempt for testId:", input.testId);
       const testData = await ctx.db.findByID({
         collection: "toeic",
         id: input.testId,
@@ -71,7 +70,7 @@ export const toeicAttemptsRouter = createTRPCRouter({
         },
       });
 
-      if (!testData) {
+      if (!testData || testData.metadata?.isPublished !== true) {
         throw new TRPCError({
           code: "NOT_FOUND",
           message: "Test not found",
@@ -126,6 +125,7 @@ export const toeicAttemptsRouter = createTRPCRouter({
 
       return {
         ...testData,
+        parts: testData.parts as Part[] | [],
         audioFile: testData.audioFile as Media | null,
       };
     }),

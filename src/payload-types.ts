@@ -70,6 +70,7 @@ export interface Config {
     users: User;
     media: Media;
     toeic: Toeic;
+    parts: Part;
     'toeic-attempts': ToeicAttempt;
     progress: Progress;
     exams: Exam;
@@ -83,6 +84,7 @@ export interface Config {
     users: UsersSelect<false> | UsersSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
     toeic: ToeicSelect<false> | ToeicSelect<true>;
+    parts: PartsSelect<false> | PartsSelect<true>;
     'toeic-attempts': ToeicAttemptsSelect<false> | ToeicAttemptsSelect<true>;
     progress: ProgressSelect<false> | ProgressSelect<true>;
     exams: ExamsSelect<false> | ExamsSelect<true>;
@@ -214,47 +216,7 @@ export interface Toeic {
   totalQuestions: number;
   difficulty?: ('easy' | 'medium' | 'hard') | null;
   audioFile?: (number | null) | Media;
-  parts?:
-    | {
-        description?: string | null;
-        sectionType: 'listening' | 'reading';
-        questionCount: number;
-        questionItems?:
-          | {
-              questionContent?: {
-                root: {
-                  type: string;
-                  children: {
-                    type: any;
-                    version: number;
-                    [k: string]: unknown;
-                  }[];
-                  direction: ('ltr' | 'rtl') | null;
-                  format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
-                  indent: number;
-                  version: number;
-                };
-                [k: string]: unknown;
-              } | null;
-              questions?:
-                | {
-                    questionNumber: number;
-                    questionText?: string | null;
-                    options?:
-                      | {
-                          optionText: string;
-                          id?: string | null;
-                        }[]
-                      | null;
-                    id?: string | null;
-                  }[]
-                | null;
-              id?: string | null;
-            }[]
-          | null;
-        id?: string | null;
-      }[]
-    | null;
+  parts?: (number | Part)[] | null;
   answers?:
     | {
         ordinal: number;
@@ -278,6 +240,53 @@ export interface Toeic {
     isPublished?: boolean | null;
     createdBy?: (number | null) | User;
   };
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "parts".
+ */
+export interface Part {
+  id: number;
+  name: string;
+  description?: string | null;
+  sectionType: 'listening' | 'reading';
+  questionCount: number;
+  questionItems?:
+    | {
+        questionContent?: {
+          root: {
+            type: string;
+            children: {
+              type: any;
+              version: number;
+              [k: string]: unknown;
+            }[];
+            direction: ('ltr' | 'rtl') | null;
+            format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+            indent: number;
+            version: number;
+          };
+          [k: string]: unknown;
+        } | null;
+        questions?:
+          | {
+              questionNumber: number;
+              questionText?: string | null;
+              options?:
+                | {
+                    optionText: string;
+                    id?: string | null;
+                  }[]
+                | null;
+              id?: string | null;
+            }[]
+          | null;
+        id?: string | null;
+      }[]
+    | null;
+  toeic?: (number | null) | Toeic;
   updatedAt: string;
   createdAt: string;
 }
@@ -395,6 +404,10 @@ export interface PayloadLockedDocument {
         value: number | Toeic;
       } | null)
     | ({
+        relationTo: 'parts';
+        value: number | Part;
+      } | null)
+    | ({
         relationTo: 'toeic-attempts';
         value: number | ToeicAttempt;
       } | null)
@@ -507,33 +520,7 @@ export interface ToeicSelect<T extends boolean = true> {
   totalQuestions?: T;
   difficulty?: T;
   audioFile?: T;
-  parts?:
-    | T
-    | {
-        description?: T;
-        sectionType?: T;
-        questionCount?: T;
-        questionItems?:
-          | T
-          | {
-              questionContent?: T;
-              questions?:
-                | T
-                | {
-                    questionNumber?: T;
-                    questionText?: T;
-                    options?:
-                      | T
-                      | {
-                          optionText?: T;
-                          id?: T;
-                        };
-                    id?: T;
-                  };
-              id?: T;
-            };
-        id?: T;
-      };
+  parts?: T;
   answers?:
     | T
     | {
@@ -561,6 +548,38 @@ export interface ToeicSelect<T extends boolean = true> {
         isPublished?: T;
         createdBy?: T;
       };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "parts_select".
+ */
+export interface PartsSelect<T extends boolean = true> {
+  name?: T;
+  description?: T;
+  sectionType?: T;
+  questionCount?: T;
+  questionItems?:
+    | T
+    | {
+        questionContent?: T;
+        questions?:
+          | T
+          | {
+              questionNumber?: T;
+              questionText?: T;
+              options?:
+                | T
+                | {
+                    optionText?: T;
+                    id?: T;
+                  };
+              id?: T;
+            };
+        id?: T;
+      };
+  toeic?: T;
   updatedAt?: T;
   createdAt?: T;
 }

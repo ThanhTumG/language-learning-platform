@@ -7,7 +7,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { BookOpen, ChevronRight, Clock } from "lucide-react";
+import { ChevronRight, Clock, Package } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 interface Props {
@@ -63,7 +64,7 @@ export const TestCard = ({
       <CardContent>
         <div className="space-y-3">
           <div className="flex items-center text-sm text-muted-foreground">
-            <BookOpen className="mr-2 h-4 w-4" />
+            <Package className="mr-2 h-4 w-4" />
             <span>{totalQuestions} questions</span>
           </div>
 
@@ -73,8 +74,14 @@ export const TestCard = ({
           </div>
 
           <Button className="w-full mt-4">
-            View Details
-            <ChevronRight className="h-6 w-6" />
+            <Link
+              href={`/test-practices/${type}/${id}`}
+              prefetch
+              className="w-full flex items-center justify-center gap-2"
+            >
+              View Details
+              <ChevronRight className="h-6 w-6" />
+            </Link>
           </Button>
         </div>
       </CardContent>

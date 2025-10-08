@@ -4,7 +4,13 @@ import { Slider } from "@/components/ui/slider";
 import { Pause, Play, Volume2, VolumeX } from "lucide-react";
 import { useRef, useState } from "react";
 
-export const AudioPlayer = ({ audioSrc }: { audioSrc: string | undefined }) => {
+export const AudioPlayer = ({
+  audioSrc,
+  onReady,
+}: {
+  audioSrc: string | undefined;
+  onReady?: () => void;
+}) => {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -21,7 +27,7 @@ export const AudioPlayer = ({ audioSrc }: { audioSrc: string | undefined }) => {
   const handleLoadedMetadata = () => {
     if (audioRef.current) {
       setDuration(audioRef.current.duration);
-      console.log("loaded metadata, duration:", audioRef.current.duration);
+      onReady?.();
     }
   };
 
@@ -36,12 +42,6 @@ export const AudioPlayer = ({ audioSrc }: { audioSrc: string | undefined }) => {
       setIsPlaying(!isPlaying);
     }
   };
-
-  // TODO: Implement when Payload supports Range requests (use cloud storage)
-  // const handleSeek = (value: number[]) => {
-  //   const newTime = value[0];
-  //   if (audioRef.current) audioRef.current.currentTime = newTime;
-  // };
 
   const handleVolumeChange = (value: number[]) => {
     const newVolume = value[0];
@@ -104,7 +104,6 @@ export const AudioPlayer = ({ audioSrc }: { audioSrc: string | undefined }) => {
             value={[currentTime]}
             max={duration || 100}
             step={0.1}
-            // onValueChange={handleSeek}
             className="cursor-not-allowed"
           />
           <div className="flex justify-between text-xs text-gray-500">

@@ -11,7 +11,13 @@ import {
 } from "@/components/ui/card";
 import { useTRPC } from "@/trpc/client";
 import { useQuery } from "@tanstack/react-query";
-import { BookOpen, CheckCircle2, Play } from "lucide-react";
+import {
+  BookOpen,
+  CheckCircle2,
+  Headphones,
+  Package,
+  Play,
+} from "lucide-react";
 import Link from "next/link";
 
 interface Props {
@@ -60,8 +66,8 @@ export const TestView = ({ testType, testId }: Props) => {
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
             <div className="flex flex-col">
-              <span className="text-sm text-muted-foreground">Sections</span>
-              <span className="text-2xl mt-1">2</span>
+              <span className="text-sm text-muted-foreground">Parts</span>
+              <span className="text-2xl mt-1">{data?.parts.length ?? 0}</span>
             </div>
             <div className="flex flex-col">
               <span className="text-sm text-muted-foreground">Questions</span>
@@ -103,6 +109,7 @@ export const TestView = ({ testType, testId }: Props) => {
             key={part.id}
             index={index + 1}
             name={`Part ${index + 1}`}
+            sectionType={part.sectionType}
             description={part.description ?? ""}
             questionCount={part.questionCount}
           />
@@ -137,12 +144,6 @@ export const TestView = ({ testType, testId }: Props) => {
                 Set aside the full duration to complete the test in one sitting
               </span>
             </li>
-            <li className="flex items-start gap-2">
-              <span className="text-primary mt-0.5">•</span>
-              <span>
-                You can pause between sections but not during a section
-              </span>
-            </li>
           </ul>
         </CardContent>
       </Card>
@@ -155,6 +156,7 @@ interface TestSectionProps {
   name: string;
   description: string;
   questionCount: number;
+  sectionType: "listening" | "reading";
 }
 
 export const TestSection = ({
@@ -162,6 +164,7 @@ export const TestSection = ({
   name,
   description,
   questionCount,
+  sectionType,
 }: TestSectionProps) => {
   return (
     <Card>
@@ -183,7 +186,15 @@ export const TestSection = ({
       <CardContent>
         <div className="flex flex-wrap gap-6">
           <div className="flex items-center gap-2">
-            <BookOpen className="h-4 w-4 text-muted-foreground" />
+            {sectionType === "listening" ? (
+              <Headphones className="h-4 w-4 text-muted-foreground" />
+            ) : (
+              <BookOpen className="h-4 w-4 text-muted-foreground" />
+            )}
+            <span className="text-sm capitalize">{sectionType}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Package className="h-4 w-4 text-muted-foreground" />
             <span className="text-sm">
               <span className="text-muted-foreground">Questions:</span>{" "}
               {questionCount}
