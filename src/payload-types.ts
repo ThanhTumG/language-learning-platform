@@ -217,14 +217,6 @@ export interface Toeic {
   difficulty?: ('easy' | 'medium' | 'hard') | null;
   audioFile?: (number | null) | Media;
   parts?: (number | Part)[] | null;
-  answers?:
-    | {
-        ordinal: number;
-        answer: number;
-        explanation?: string | null;
-        id?: string | null;
-      }[]
-    | null;
   scoring: {
     listeningMaxScore: number;
     readingMaxScore: number;
@@ -240,6 +232,13 @@ export interface Toeic {
     isPublished?: boolean | null;
     createdBy?: (number | null) | User;
   };
+  answers?:
+    | {
+        answer: number;
+        explanation?: string | null;
+        id?: string | null;
+      }[]
+    | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -521,14 +520,6 @@ export interface ToeicSelect<T extends boolean = true> {
   difficulty?: T;
   audioFile?: T;
   parts?: T;
-  answers?:
-    | T
-    | {
-        ordinal?: T;
-        answer?: T;
-        explanation?: T;
-        id?: T;
-      };
   scoring?:
     | T
     | {
@@ -547,6 +538,13 @@ export interface ToeicSelect<T extends boolean = true> {
             };
         isPublished?: T;
         createdBy?: T;
+      };
+  answers?:
+    | T
+    | {
+        answer?: T;
+        explanation?: T;
+        id?: T;
       };
   updatedAt?: T;
   createdAt?: T;

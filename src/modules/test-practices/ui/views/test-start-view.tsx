@@ -32,6 +32,7 @@ interface Props {
 
 interface testDataType {
   id: number;
+  attemptId: number;
   audio?: string | undefined;
   title: string;
   description?: string | null;
@@ -73,7 +74,7 @@ export const TestStartView = ({ testId }: Props) => {
   >([]);
   const [selectedQNItem, setSelectedQNItem] = useState<number>(1);
   const [selectedQN, setSelectedQN] = useState<number>(1);
-  const [answers, setAnswers] = useState<{ [key: number]: number }>({});
+  const [answers, setAnswers] = useState<{ [key: string]: number }>({});
   const [endAt, setEndAt] = useState<number | null>(null);
 
   // const isToeic = testType === "toeic";
@@ -99,6 +100,7 @@ export const TestStartView = ({ testId }: Props) => {
 
         setTestData({
           id: data.id,
+          attemptId: data.attemptId,
           audio: data.audioFile?.url ?? undefined,
           duration: data.duration,
           title: data.title,
@@ -113,6 +115,14 @@ export const TestStartView = ({ testId }: Props) => {
       },
     }),
   });
+
+  const updateTestMutation = useMutation(
+    trpc.toeicAttempts.update.mutationOptions({
+      onError: (error) => {
+        console.error(error);
+      },
+    })
+  );
 
   const updateAnswer = (questionId: number, answer: number) => {
     if (questionId === null) return;
@@ -134,7 +144,12 @@ export const TestStartView = ({ testId }: Props) => {
   };
 
   const handleFinishTest = () => {
-    console.log("Finish Test", answers);
+    if (testData) {
+      updateTestMutation.mutate({
+        attemptId: testData?.attemptId,
+        answers: answers,
+      });
+    }
   };
 
   const attemptCreatedRef = React.useRef(false);
@@ -204,7 +219,7 @@ export const TestStartView = ({ testId }: Props) => {
               }
             />
             {/* Question */}
-            {questionItemList.length > 0 && (
+            {questionItemList.length > 0 && endAt !== null && (
               <QuestionItemCard
                 questionItem={questionItemList[selectedQNItem - 1]}
                 updateAnswer={updateAnswer}

@@ -60,30 +60,6 @@ export const Toeic: CollectionConfig = {
       label: "Parts",
     },
     {
-      name: "answers",
-      type: "array",
-      label: "Answers (for all questions)",
-      fields: [
-        {
-          name: "ordinal",
-          type: "number",
-          required: true,
-          label: "Ordinal (1-200)",
-        },
-        {
-          name: "answer",
-          type: "number",
-          required: true,
-          label: "Answer (index starting from 1)",
-        },
-        {
-          name: "explanation",
-          type: "textarea",
-          label: "Explanation",
-        },
-      ],
-    },
-    {
       name: "scoring",
       type: "group",
       label: "Scoring",
@@ -142,6 +118,24 @@ export const Toeic: CollectionConfig = {
           admin: {
             readOnly: true,
           },
+        },
+      ],
+    },
+    {
+      name: "answers",
+      type: "array",
+      label: "Answers (for all questions)",
+      fields: [
+        {
+          name: "answer",
+          type: "number",
+          required: true,
+          label: "Answer key (1 - 4)",
+        },
+        {
+          name: "explanation",
+          type: "textarea",
+          label: "Explanation",
         },
       ],
     },

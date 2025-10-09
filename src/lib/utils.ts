@@ -16,3 +16,27 @@ export const formatTime = (seconds: number) => {
   }
   return `${minutes}:${secs.toString().padStart(2, "0")}`;
 };
+
+type calculateScoreType = {
+  tType: "toeic" | "ielts";
+  pType: "listening" | "reading" | "speaking" | "writing";
+  correct: number;
+};
+
+export function calculateScore({ tType, pType, correct }: calculateScoreType) {
+  // Toeic
+  if (tType === "toeic") {
+    if (pType === "listening") {
+      return correct < 1
+        ? 0
+        : correct < 76
+        ? (correct - 1) * 5 + 15
+        : correct < 96
+        ? (correct - 1) * 5 + 15
+        : 495;
+    } else if (pType === "reading") {
+      return correct < 1 ? 0 : correct < 3 ? 5 : 10 + (correct - 3) * 5;
+    }
+  }
+  return 0;
+}
