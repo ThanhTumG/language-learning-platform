@@ -3,6 +3,7 @@ import { Media, Part, Toeic, User } from "@/payload-types";
 import { createTRPCRouter, protectedProcedure } from "@/trpc/init";
 import { TRPCError } from "@trpc/server";
 import z from "zod";
+import { ScoreByPartType } from "../type";
 
 export const toeicAttemptsRouter = createTRPCRouter({
   getOne: protectedProcedure
@@ -15,6 +16,7 @@ export const toeicAttemptsRouter = createTRPCRouter({
       const attemptData = await ctx.db.findByID({
         collection: "toeic-attempts",
         id: input.attemptId,
+        depth: 1,
       });
 
       if (!attemptData) {
@@ -23,8 +25,10 @@ export const toeicAttemptsRouter = createTRPCRouter({
           message: "Toeic attempt not found",
         });
       }
-
-      return attemptData;
+      return {
+        ...attemptData,
+        test: attemptData.test as Toeic | null,
+      };
     }),
 
   getMany: protectedProcedure
@@ -141,6 +145,7 @@ export const toeicAttemptsRouter = createTRPCRouter({
       z.object({
         attemptId: z.number(),
         answers: z.record(z.string(), z.number()),
+        timeSpend: z.number(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -192,13 +197,30 @@ export const toeicAttemptsRouter = createTRPCRouter({
         answers.map((a, i) => [(i + 1).toString(), a.answer])
       );
 
+      const scoreByPart: ScoreByPartType = Array.from({
+        length: lilParts.length,
+      }).map((_, index) => {
+        return {
+          questions: [],
+          accuracyRate: 0,
+          correctQuestions: 0,
+          totalQuestions: testParts[index].questionCount,
+        };
+      });
+
       for (const qnKey in input.answers) {
+        const pIdx = lilParts.findLastIndex((p) => p.start <= parseInt(qnKey));
         if (input.answers[qnKey] === liteAnswers[qnKey]) {
-          const pIdx = lilParts.findLastIndex(
-            (p) => p.start <= parseInt(qnKey)
-          );
           lilParts[pIdx].check += 1;
+          if (scoreByPart[pIdx]) scoreByPart[pIdx].correctQuestions += 1;
         }
+        scoreByPart[pIdx]?.questions?.push({
+          question: {
+            questionNumber: parseInt(qnKey),
+            userAnswer: input.answers[qnKey],
+            correctAnswer: liteAnswers[qnKey],
+          },
+        });
       }
 
       const totalListening = lilParts.reduce(
@@ -210,11 +232,16 @@ export const toeicAttemptsRouter = createTRPCRouter({
         0
       );
 
-      await ctx.db.update({
+      scoreByPart.forEach((p) => {
+        console.log(p);
+      });
+
+      const { id } = await ctx.db.update({
         collection: "toeic-attempts",
         id: input.attemptId,
         data: {
-          status: "completed",
+          status: "in_progress",
+          timeSpent: input.timeSpend / 60000,
           scores: {
             listening: calculateScore({
               tType: "toeic",
@@ -227,7 +254,16 @@ export const toeicAttemptsRouter = createTRPCRouter({
               correct: totalReading,
             }),
           },
+          parts: scoreByPart.map((p) => ({
+            ...p,
+            accuracyRate:
+              p && Math.round((p?.correctQuestions / p?.totalQuestions) * 100),
+          })),
         },
       });
+
+      console.log(scoreByPart);
+
+      return id;
     }),
 });

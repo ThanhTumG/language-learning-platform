@@ -17,6 +17,15 @@ export const formatTime = (seconds: number) => {
   return `${minutes}:${secs.toString().padStart(2, "0")}`;
 };
 
+export const formatDuration = (seconds: number) => {
+  const minutes = Math.floor(seconds / 60);
+  const hours = Math.floor(minutes / 60);
+  if (hours > 0) {
+    return `${hours}h ${minutes % 60}m`;
+  }
+  return `${minutes}m ${seconds % 60}s`;
+};
+
 type calculateScoreType = {
   tType: "toeic" | "ielts";
   pType: "listening" | "reading" | "speaking" | "writing";
@@ -39,4 +48,25 @@ export function calculateScore({ tType, pType, correct }: calculateScoreType) {
     }
   }
   return 0;
+}
+
+export function evaluateSpeed(
+  timePerQuestion: number,
+  testType: "toeic" | "ielts"
+) {
+  if (testType === "toeic") {
+    if (timePerQuestion < 30) return "Excellent";
+    if (timePerQuestion < 40) return "Good";
+    if (timePerQuestion < 50) return "Average";
+    if (timePerQuestion < 65) return "Slow";
+    return "Very Slow";
+  }
+
+  if (testType === "ielts") {
+    if (timePerQuestion < 70) return "Excellent";
+    if (timePerQuestion < 100) return "Good";
+    if (timePerQuestion < 120) return "Average";
+    if (timePerQuestion < 150) return "Slow";
+    return "Very Slow";
+  }
 }
