@@ -24,6 +24,7 @@ import {
 import { AudioPlayer } from "../components/audio-player";
 import { ToeicAttemptsQuestionItemOutput } from "@/modules/toeic-attempts/type";
 import { QuestionItemCard } from "../components/question-item-card";
+import { useRouter } from "next/navigation";
 
 interface Props {
   testType: string;
@@ -67,7 +68,7 @@ function CountdownDisplay({ endAt }: { endAt: number }) {
   );
 }
 
-export const TestStartView = ({ testId }: Props) => {
+export const TestStartView = ({ testType, testId }: Props) => {
   const [testData, setTestData] = useState<testDataType | null>(null);
   const [questionItemList, setQuestionItemList] = useState<
     ToeicAttemptsQuestionItemOutput[]
@@ -116,8 +117,13 @@ export const TestStartView = ({ testId }: Props) => {
     }),
   });
 
+  const router = useRouter();
+
   const updateTestMutation = useMutation(
     trpc.toeicAttempts.update.mutationOptions({
+      onSuccess: (data) => {
+        router.push(`/dashboard/${testType}/${data}/result`);
+      },
       onError: (error) => {
         console.error(error);
       },
@@ -144,10 +150,11 @@ export const TestStartView = ({ testId }: Props) => {
   };
 
   const handleFinishTest = () => {
-    if (testData) {
+    if (testData && endAt) {
       updateTestMutation.mutate({
         attemptId: testData?.attemptId,
         answers: answers,
+        timeSpend: testData.duration * 60 * 1000 - (endAt - Date.now()),
       });
     }
   };
@@ -186,7 +193,11 @@ export const TestStartView = ({ testId }: Props) => {
                 {endAt && <CountdownDisplay endAt={endAt} />}
                 <p className="text-xs text-gray-500">Time Remaining</p>
               </div>
-              <Button variant="destructive" onClick={() => {}}>
+              <Button
+                disabled={updateTestMutation.isPending}
+                variant="destructive"
+                onClick={handleFinishTest}
+              >
                 <Square className="mr-2 h-4 w-4" />
                 Finish Test
               </Button>
@@ -249,6 +260,7 @@ export const TestStartView = ({ testId }: Props) => {
                 </div>
               }
               <Button
+                disabled={updateTestMutation.isPending}
                 onClick={() => {
                   if (selectedQNItem < questionItemList.length) {
                     gotoQuestion(

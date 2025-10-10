@@ -304,39 +304,30 @@ export interface ToeicAttempt {
     reading?: number | null;
     total?: number | null;
   };
-  sectionScores?: {
-    listeningDetails?: {
-      part1?: number | null;
-      part2?: number | null;
-      part3?: number | null;
-      part4?: number | null;
-    };
-    readingDetails?: {
-      part5?: number | null;
-      part6?: number | null;
-      part7?: number | null;
-    };
-  };
-  answers?:
+  parts?:
     | {
-        questionNumber: number;
-        section: 'listening' | 'reading';
-        part: number;
-        userAnswer?: string | null;
-        correctAnswer?: string | null;
-        isCorrect?: boolean | null;
-        timeSpent?: number | null;
-        difficulty?: ('easy' | 'medium' | 'hard') | null;
+        accuracyRate?: number | null;
+        questions?:
+          | {
+              question: {
+                questionNumber: number;
+                userAnswer?: number | null;
+                correctAnswer?: number | null;
+              };
+              id?: string | null;
+            }[]
+          | null;
         id?: string | null;
       }[]
     | null;
   status?: ('in_progress' | 'completed' | 'abandoned' | 'timeout') | null;
-  notes?: string | null;
   attemptNumber?: number | null;
   improvement?: {
     previousAttempt?: (number | null) | ToeicAttempt;
   };
   analytics?: {
+    userAnswer?: number | null;
+    correctAnswer?: number | null;
     accuracyRate?: number | null;
     averageTimePerQuestion?: number | null;
     weakAreas?:
@@ -597,40 +588,25 @@ export interface ToeicAttemptsSelect<T extends boolean = true> {
         reading?: T;
         total?: T;
       };
-  sectionScores?:
+  parts?:
     | T
     | {
-        listeningDetails?:
+        accuracyRate?: T;
+        questions?:
           | T
           | {
-              part1?: T;
-              part2?: T;
-              part3?: T;
-              part4?: T;
+              question?:
+                | T
+                | {
+                    questionNumber?: T;
+                    userAnswer?: T;
+                    correctAnswer?: T;
+                  };
+              id?: T;
             };
-        readingDetails?:
-          | T
-          | {
-              part5?: T;
-              part6?: T;
-              part7?: T;
-            };
-      };
-  answers?:
-    | T
-    | {
-        questionNumber?: T;
-        section?: T;
-        part?: T;
-        userAnswer?: T;
-        correctAnswer?: T;
-        isCorrect?: T;
-        timeSpent?: T;
-        difficulty?: T;
         id?: T;
       };
   status?: T;
-  notes?: T;
   attemptNumber?: T;
   improvement?:
     | T
@@ -640,6 +616,8 @@ export interface ToeicAttemptsSelect<T extends boolean = true> {
   analytics?:
     | T
     | {
+        userAnswer?: T;
+        correctAnswer?: T;
         accuracyRate?: T;
         averageTimePerQuestion?: T;
         weakAreas?:
