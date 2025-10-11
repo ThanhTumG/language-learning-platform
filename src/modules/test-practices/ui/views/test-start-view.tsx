@@ -49,16 +49,27 @@ interface formattedTestPartsType {
   questionItem: number[];
 }
 
-function CountdownDisplay({ endAt }: { endAt: number }) {
+function CountdownDisplay({
+  endAt,
+  callBack,
+  isStop,
+}: {
+  endAt: number;
+  callBack: () => void;
+  isStop: boolean;
+}) {
   const [, setTick] = React.useState(0);
 
   React.useEffect(() => {
     const interval = setInterval(() => {
       setTick((t) => t + 1); // trigger re-render
-      if (Date.now() >= endAt) clearInterval(interval);
+      if (Date.now() >= endAt || isStop) {
+        callBack();
+        clearInterval(interval);
+      }
     }, 1000);
     return () => clearInterval(interval);
-  }, [endAt]);
+  }, [endAt, callBack, isStop]);
 
   const remainingSec = Math.max(0, Math.ceil((endAt - Date.now()) / 1000));
   return (
@@ -190,7 +201,13 @@ export const TestStartView = ({ testType, testId }: Props) => {
             </div>
             <div className="flex items-center gap-4">
               <div className="text-center">
-                {endAt && <CountdownDisplay endAt={endAt} />}
+                {endAt && (
+                  <CountdownDisplay
+                    endAt={endAt}
+                    callBack={handleFinishTest}
+                    isStop={updateTestMutation.isSuccess}
+                  />
+                )}
                 <p className="text-xs text-gray-500">Time Remaining</p>
               </div>
               <Button

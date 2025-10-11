@@ -9,7 +9,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { evaluateSpeed, formatDuration } from "@/lib/utils";
+import { cn, evaluateSpeed, formatDuration } from "@/lib/utils";
+import { Part } from "@/payload-types";
 import { useTRPC } from "@/trpc/client";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import {
@@ -20,7 +21,7 @@ import {
   Trophy,
   XCircle,
 } from "lucide-react";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
   Bar,
   BarChart,
@@ -33,6 +34,8 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { QuestionReview } from "../components/question-review";
+import { Button } from "@/components/ui/button";
 
 interface Props {
   test: string;
@@ -45,6 +48,9 @@ interface AccuracyPartsType {
 }
 
 export const ResultView = ({ test, attemptId }: Props) => {
+  const [reviewQNFilter, setReviewQNFilter] = useState<
+    "all" | "correct" | "incorrect" | "unanswered"
+  >("all");
   const trpc = useTRPC();
   const { data } = useSuspenseQuery(
     trpc.toeicAttempts.getOne.queryOptions({
@@ -90,8 +96,6 @@ export const ResultView = ({ test, attemptId }: Props) => {
     const user = data.analytics?.userAnswer ?? 0;
     const incorrect = user - correct;
 
-    console.log(total, correct, user, incorrect / total, total - user);
-
     return [
       {
         name: "Correct",
@@ -105,9 +109,7 @@ export const ResultView = ({ test, attemptId }: Props) => {
       },
       {
         name: "Unanswered",
-        value: parseFloat(
-          Math.floor(((total - user) / total) * 100).toFixed(1)
-        ),
+        value: parseFloat((((total - user) / total) * 100).toFixed(1)),
         color: "#94a3b8",
       },
     ];
@@ -117,6 +119,50 @@ export const ResultView = ({ test, attemptId }: Props) => {
     data.test?.totalQuestions,
   ]);
 
+  const reviewQuestions = useMemo(() => {
+    const testParts = data.test?.parts as Part[] | null | undefined;
+    const answers = data.test?.answers;
+    const userParts = data.parts ?? [];
+    const userAnswers = userParts.flatMap((p) => p.questions ?? []);
+
+    if (testParts && answers && userAnswers) {
+      const reviewQN = testParts.flatMap((part) => {
+        const questionItems = part.questionItems ?? [];
+        return questionItems.flatMap((qs) => {
+          const questions = qs.questions ?? [];
+          return questions.map((q) => {
+            const userAnswer = userAnswers.find(
+              (ua) => ua.question.questionNumber === q.questionNumber
+            );
+            return {
+              ...q,
+              userAnswer: userAnswer?.question.userAnswer,
+              correctAnswer: userAnswer?.question.correctAnswer,
+            };
+          });
+        });
+      });
+      let filterReview = [];
+      if (reviewQNFilter === "correct") {
+        filterReview = reviewQN.filter(
+          (q) =>
+            q.correctAnswer && q.userAnswer && q.correctAnswer === q.userAnswer
+        );
+      } else if (reviewQNFilter === "incorrect") {
+        filterReview = reviewQN.filter(
+          (q) =>
+            q.correctAnswer && q.userAnswer && q.correctAnswer !== q.userAnswer
+        );
+      } else if (reviewQNFilter === "unanswered") {
+        filterReview = reviewQN.filter((q) => !q.userAnswer);
+      } else {
+        filterReview = reviewQN;
+      }
+      return filterReview;
+    }
+    return [];
+  }, [data.parts, data.test?.answers, data.test?.parts, reviewQNFilter]);
+
   return (
     <div className="max-w-6xl container mx-auto p-6 space-y-6">
       {/* Header */}
@@ -124,7 +170,7 @@ export const ResultView = ({ test, attemptId }: Props) => {
         <div className="flex items-center justify-center mb-4">
           <Trophy className="h-12 w-12 text-yellow-500 mr-4" />
           <div>
-            <h1 className="text-3xl text-primary">Test Complete!</h1>
+            <h1 className="text-3xl text-primary">Test Result</h1>
             <p className="text-muted-foreground">{data.attemptTitle}</p>
           </div>
         </div>
@@ -284,6 +330,86 @@ export const ResultView = ({ test, attemptId }: Props) => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Question Review - For listening and reading sections */}
+      <Card>
+        <CardHeader className="flex justify-between">
+          <div>
+            <div className="flex items-center gap-2">
+              <CheckCircle className="h-5 w-5" />
+              <CardTitle>Question Review</CardTitle>
+            </div>
+            <CardDescription>
+              Review all questions and your answers (listening & reading
+              section)
+            </CardDescription>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              onClick={() =>
+                setReviewQNFilter((prev) =>
+                  prev === "correct" ? "all" : "correct"
+                )
+              }
+              className={cn(
+                "text-base",
+                reviewQNFilter === "correct"
+                  ? "border-1 bg-accent"
+                  : "border-0 shadow-none hover:border-1"
+              )}
+            >
+              Correct
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() =>
+                setReviewQNFilter((prev) =>
+                  prev === "incorrect" ? "all" : "incorrect"
+                )
+              }
+              className={cn(
+                "text-base",
+                reviewQNFilter === "incorrect"
+                  ? "border-1 bg-accent"
+                  : "border-0 shadow-none hover:border-1"
+              )}
+            >
+              Incorrect
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() =>
+                setReviewQNFilter((prev) =>
+                  prev === "unanswered" ? "all" : "unanswered"
+                )
+              }
+              className={cn(
+                "text-base",
+                reviewQNFilter === "unanswered"
+                  ? "border-1 bg-accent"
+                  : "border-0 shadow-none hover:border-1"
+              )}
+            >
+              Unanswered
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3">
+            {reviewQuestions.map((rq) => (
+              <QuestionReview
+                key={rq.questionNumber}
+                qnNumber={rq.questionNumber}
+                qnText={rq.questionText}
+                options={rq.options}
+                userAnswer={rq.userAnswer}
+                correctAnswer={rq.correctAnswer}
+              />
+            ))}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };
