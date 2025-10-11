@@ -16,7 +16,7 @@ export const toeicAttemptsRouter = createTRPCRouter({
       const attemptData = await ctx.db.findByID({
         collection: "toeic-attempts",
         id: input.attemptId,
-        depth: 1,
+        depth: 2,
       });
 
       if (!attemptData) {
