@@ -54,6 +54,7 @@ export function evaluateSpeed(
   timePerQuestion: number,
   testType: "toeic" | "ielts"
 ) {
+  if (timePerQuestion === 0) return '"The Flash"';
   if (testType === "toeic") {
     if (timePerQuestion < 30) return "Excellent";
     if (timePerQuestion < 40) return "Good";

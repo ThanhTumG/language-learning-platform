@@ -247,10 +247,13 @@ export const ToeicAttempt: CollectionConfig = {
             ...data.analytics,
             userAnswer: totalQuestions,
             correctAnswer: correctAnswers,
-            accuracyRate: Math.round((correctAnswers / totalQuestions) * 100),
-            averageTimePerQuestion: data.timeSpent
-              ? Math.round((data.timeSpent * 60) / totalQuestions)
+            accuracyRate: totalQuestions
+              ? Math.round((correctAnswers / totalQuestions) * 100)
               : 0,
+            averageTimePerQuestion:
+              data.timeSpent && totalQuestions
+                ? Math.round((data.timeSpent * 60) / totalQuestions)
+                : 0,
           };
         }
       },

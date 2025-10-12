@@ -59,17 +59,21 @@ function CountdownDisplay({
   isStop: boolean;
 }) {
   const [, setTick] = React.useState(0);
+  const [isFinished, setIsFinished] = React.useState(false);
 
   React.useEffect(() => {
     const interval = setInterval(() => {
       setTick((t) => t + 1); // trigger re-render
-      if (Date.now() >= endAt || isStop) {
+      if (isStop) {
+        clearInterval(interval);
+      } else if (Date.now() >= endAt && !isFinished) {
         callBack();
+        setIsFinished(true);
         clearInterval(interval);
       }
     }, 1000);
     return () => clearInterval(interval);
-  }, [endAt, callBack, isStop]);
+  }, [endAt, callBack, isStop, isFinished]);
 
   const remainingSec = Math.max(0, Math.ceil((endAt - Date.now()) / 1000));
   return (
@@ -161,6 +165,7 @@ export const TestStartView = ({ testType, testId }: Props) => {
   };
 
   const handleFinishTest = () => {
+    console.log("finish");
     if (testData && endAt) {
       updateTestMutation.mutate({
         attemptId: testData?.attemptId,
@@ -315,36 +320,37 @@ export const TestStartView = ({ testType, testId }: Props) => {
               </CardHeader>
               <CardContent>
                 <div className="max-h-[calc(100vh-16rem)] overflow-y-auto p-2">
-                  {testData?.parts?.map((part) => (
-                    <div key={part.partNumber} className="col-span-5">
-                      <h3 className="font-semibold mb-2">
-                        Part {part.partNumber}
-                      </h3>
-                      <div className="grid grid-cols-5 gap-2">
-                        {part.questionItem.map((qn) => {
-                          const isAnswered = answers[qn] !== undefined;
-                          return (
-                            <Button
-                              key={qn}
-                              variant={isAnswered ? "secondary" : "outline"}
-                              size="sm"
-                              onClick={() => gotoQuestion(qn)}
-                              className={`relative ${
-                                isAnswered
-                                  ? "bg-cyan-100 hover:bg-cyan-200 text-cyan-900 border-cyan-300"
-                                  : ""
-                              }`}
-                            >
-                              {qn}
-                              {isAnswered && (
-                                <CheckCircle className="absolute -top-1 -right-1 h-4 w-4 text-cyan-600 bg-white rounded-full" />
-                              )}
-                            </Button>
-                          );
-                        })}
+                  {endAt &&
+                    testData?.parts?.map((part) => (
+                      <div key={part.partNumber} className="col-span-5">
+                        <h3 className="font-semibold mb-2">
+                          Part {part.partNumber}
+                        </h3>
+                        <div className="grid grid-cols-5 gap-2">
+                          {part.questionItem.map((qn) => {
+                            const isAnswered = answers[qn] !== undefined;
+                            return (
+                              <Button
+                                key={qn}
+                                variant={isAnswered ? "secondary" : "outline"}
+                                size="sm"
+                                onClick={() => gotoQuestion(qn)}
+                                className={`relative ${
+                                  isAnswered
+                                    ? "bg-cyan-100 hover:bg-cyan-200 text-cyan-900 border-cyan-300"
+                                    : ""
+                                }`}
+                              >
+                                {qn}
+                                {isAnswered && (
+                                  <CheckCircle className="absolute -top-1 -right-1 h-4 w-4 text-cyan-600 bg-white rounded-full" />
+                                )}
+                              </Button>
+                            );
+                          })}
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
                 </div>
               </CardContent>
             </Card>

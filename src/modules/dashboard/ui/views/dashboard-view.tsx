@@ -210,7 +210,9 @@ export const DashboardView = () => {
                       page.docs.map((attempt) => (
                         <AttemptCard
                           key={attempt.id}
-                          date={attempt.createdAt}
+                          date={new Date(attempt.updatedAt).toLocaleString(
+                            "vi-VN"
+                          )}
                           name={attempt.attemptTitle as string}
                           score={attempt.scores?.total || 0}
                           type="toeic"

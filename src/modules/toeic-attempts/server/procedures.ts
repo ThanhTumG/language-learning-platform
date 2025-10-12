@@ -19,7 +19,7 @@ export const toeicAttemptsRouter = createTRPCRouter({
         depth: 2,
       });
 
-      if (!attemptData) {
+      if (!attemptData || attemptData.status !== "completed") {
         throw new TRPCError({
           code: "NOT_FOUND",
           message: "Toeic attempt not found",
@@ -240,7 +240,7 @@ export const toeicAttemptsRouter = createTRPCRouter({
         collection: "toeic-attempts",
         id: input.attemptId,
         data: {
-          status: "in_progress",
+          status: "completed",
           timeSpent: input.timeSpend / 60000,
           scores: {
             listening: calculateScore({
@@ -257,7 +257,9 @@ export const toeicAttemptsRouter = createTRPCRouter({
           parts: scoreByPart.map((p) => ({
             ...p,
             accuracyRate:
-              p && Math.round((p?.correctQuestions / p?.totalQuestions) * 100),
+              p && p?.totalQuestions
+                ? Math.round((p?.correctQuestions / p?.totalQuestions) * 100)
+                : 0,
           })),
         },
       });

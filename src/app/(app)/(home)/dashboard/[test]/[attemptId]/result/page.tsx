@@ -1,6 +1,7 @@
 import { ResultView } from "@/modules/dashboard/ui/views/result-view";
-import { getQueryClient, trpc } from "@/trpc/server";
+import { caller, getQueryClient, trpc } from "@/trpc/server";
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
+import { redirect } from "next/navigation";
 
 interface Props {
   params: Promise<{
@@ -11,6 +12,11 @@ interface Props {
 
 export default async function Page({ params }: Props) {
   const { test, attemptId } = await params;
+
+  const { user } = await caller.auth.session();
+  if (!user) {
+    redirect("/sign-in");
+  }
 
   const queryClient = getQueryClient();
   void queryClient.prefetchQuery(
