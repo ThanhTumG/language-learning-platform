@@ -19,12 +19,33 @@ export const authRouter = createTRPCRouter({
   register: baseProcedure
     .input(registerSchema)
     .mutation(async ({ ctx, input }) => {
-      await ctx.db.create({
+      const { id } = await ctx.db.create({
         collection: "users",
         data: {
           email: input.email,
           fullname: input.fullname,
           password: input.password,
+        },
+      });
+
+      await ctx.db.create({
+        collection: "progress",
+        data: {
+          user: id,
+          skill: [
+            {
+              type: "toeic",
+              averageScore: 0,
+              bestScore: 0,
+              totalStudyTime: 0,
+              learningGoals: { targetScore: undefined },
+              skillsAverage: [
+                { subSkill: "listening", averageScore: 0 },
+                { subSkill: "reading", averageScore: 0 },
+              ],
+              totalTestsCompleted: 0,
+            },
+          ],
         },
       });
 
@@ -47,6 +68,7 @@ export const authRouter = createTRPCRouter({
         prefix: ctx.db.config.cookiePrefix,
         value: data.token,
       });
+
       return data;
     }),
   login: baseProcedure.input(loginSchema).mutation(async ({ ctx, input }) => {

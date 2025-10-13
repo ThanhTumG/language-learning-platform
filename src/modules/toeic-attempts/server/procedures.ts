@@ -1,5 +1,5 @@
 import { calculateScore } from "@/lib/utils";
-import { Media, Part, Toeic, User } from "@/payload-types";
+import { Media, Part, Progress, Toeic, User } from "@/payload-types";
 import { createTRPCRouter, protectedProcedure } from "@/trpc/init";
 import { TRPCError } from "@trpc/server";
 import z from "zod";
@@ -232,8 +232,15 @@ export const toeicAttemptsRouter = createTRPCRouter({
         0
       );
 
-      scoreByPart.forEach((p) => {
-        console.log(p);
+      const listenScore = calculateScore({
+        tType: "toeic",
+        pType: "listening",
+        correct: totalListening,
+      });
+      const readingScore = calculateScore({
+        tType: "toeic",
+        pType: "reading",
+        correct: totalReading,
       });
 
       const { id } = await ctx.db.update({
@@ -243,16 +250,8 @@ export const toeicAttemptsRouter = createTRPCRouter({
           status: "completed",
           timeSpent: input.timeSpend / 60000,
           scores: {
-            listening: calculateScore({
-              tType: "toeic",
-              pType: "listening",
-              correct: totalListening,
-            }),
-            reading: calculateScore({
-              tType: "toeic",
-              pType: "reading",
-              correct: totalReading,
-            }),
+            listening: listenScore,
+            reading: readingScore,
           },
           parts: scoreByPart.map((p) => ({
             ...p,
@@ -264,8 +263,75 @@ export const toeicAttemptsRouter = createTRPCRouter({
         },
       });
 
-      console.log(scoreByPart);
+      const progressData = await ctx.db.find({
+        collection: "progress",
+        where: { user: { equals: user.id } },
+      });
 
+      let progress: Progress | null = null;
+
+      if (progressData.totalDocs > 0) {
+        progress = progressData.docs[0];
+
+        const skillIndex =
+          progress.skill?.findIndex((s) => s.type === "toeic") ?? -1;
+        const skillData =
+          skillIndex !== -1 ? progress.skill?.[skillIndex] : undefined;
+        const attempt = skillData?.totalTestsCompleted ?? 0;
+        const listenIdx =
+          skillData?.skillsAverage?.findIndex(
+            (sa) => sa.subSkill === "listening"
+          ) ?? -1;
+        const readIdx =
+          skillData?.skillsAverage?.findIndex(
+            (sa) => sa.subSkill === "reading"
+          ) ?? -1;
+
+        if (
+          skillData?.skillsAverage &&
+          listenIdx !== -1 &&
+          readIdx !== -1 &&
+          skillIndex !== -1 &&
+          progress.skill
+        ) {
+          skillData.skillsAverage[listenIdx].averageScore =
+            ((skillData.skillsAverage[listenIdx].averageScore ?? 0) * attempt +
+              listenScore) /
+            (attempt + 1);
+          skillData.skillsAverage[readIdx].averageScore =
+            ((skillData.skillsAverage[readIdx].averageScore ?? 0) * attempt +
+              readingScore) /
+            (attempt + 1);
+          skillData.averageScore =
+            ((skillData?.averageScore ?? 0) * attempt +
+              (listenScore + readingScore)) /
+            (attempt + 1);
+          skillData.bestScore = Math.max(
+            skillData.bestScore ?? 0,
+            listenScore + readingScore
+          );
+          skillData.totalTestsCompleted =
+            (skillData.totalTestsCompleted ?? 0) + 1;
+          skillData.totalStudyTime =
+            (skillData.totalStudyTime ?? 0) + input.timeSpend / 60000;
+
+          progress.skill[skillIndex] = skillData;
+          console.log("progress", progress);
+        }
+
+        await ctx.db.update({
+          collection: "progress",
+          where: {
+            user: {
+              equals: user.id,
+            },
+          },
+          data: {
+            ...progress,
+            skill: progress.skill,
+          },
+        });
+      }
       return id;
     }),
 });

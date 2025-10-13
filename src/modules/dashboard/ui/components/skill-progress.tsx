@@ -28,7 +28,7 @@ export const SkillProgress = ({
           <span className="font-medium">{skill}</span>
         </div>
         <span className="text-sm text-gray-500">
-          {current} / {target}
+          {current.toFixed(1)} / {target}
         </span>
       </div>
       <Progress value={(current / target) * 100} className="h-2" />

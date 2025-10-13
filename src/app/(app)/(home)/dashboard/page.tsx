@@ -18,12 +18,7 @@ export default async function Page() {
     })
   );
 
-  void queryClient.prefetchQuery(
-    trpc.progress.getBySkill.queryOptions({ skill: "ielts" })
-  );
-  void queryClient.prefetchQuery(
-    trpc.progress.getBySkill.queryOptions({ skill: "toeic" })
-  );
+  void queryClient.prefetchQuery(trpc.progress.getOne.queryOptions());
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
