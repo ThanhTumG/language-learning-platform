@@ -355,22 +355,26 @@ export interface ToeicAttempt {
 export interface Progress {
   id: number;
   user: number | User;
-  skill: 'toeic' | 'ielts';
-  studyStreak?: number | null;
-  lastStudyDate?: string | null;
-  totalTestsCompleted?: number | null;
-  averageScore?: number | null;
-  skillsAverage?:
+  skill?:
     | {
-        subSkill: 'listening' | 'reading' | 'writing' | 'speaking';
+        type: 'toeic' | 'ielts';
+        totalStudyTime?: number | null;
+        totalTestsCompleted?: number | null;
         averageScore?: number | null;
+        skillsAverage?:
+          | {
+              subSkill: 'listening' | 'reading' | 'writing' | 'speaking';
+              averageScore?: number | null;
+              id?: string | null;
+            }[]
+          | null;
+        bestScore?: number | null;
+        learningGoals?: {
+          targetScore?: number | null;
+        };
         id?: string | null;
       }[]
     | null;
-  bestScore?: number | null;
-  learningGoals?: {
-    targetScore?: number | null;
-  };
   updatedAt: string;
   createdAt: string;
 }
@@ -644,23 +648,27 @@ export interface ToeicAttemptsSelect<T extends boolean = true> {
  */
 export interface ProgressSelect<T extends boolean = true> {
   user?: T;
-  skill?: T;
-  studyStreak?: T;
-  lastStudyDate?: T;
-  totalTestsCompleted?: T;
-  averageScore?: T;
-  skillsAverage?:
+  skill?:
     | T
     | {
-        subSkill?: T;
+        type?: T;
+        totalStudyTime?: T;
+        totalTestsCompleted?: T;
         averageScore?: T;
+        skillsAverage?:
+          | T
+          | {
+              subSkill?: T;
+              averageScore?: T;
+              id?: T;
+            };
+        bestScore?: T;
+        learningGoals?:
+          | T
+          | {
+              targetScore?: T;
+            };
         id?: T;
-      };
-  bestScore?: T;
-  learningGoals?:
-    | T
-    | {
-        targetScore?: T;
       };
   updatedAt?: T;
   createdAt?: T;

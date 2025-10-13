@@ -1,3 +1,4 @@
+import { isSuperAdmin } from "@/lib/utils";
 import type { CollectionConfig } from "payload";
 
 export const Toeic: CollectionConfig = {
@@ -115,8 +116,9 @@ export const Toeic: CollectionConfig = {
           type: "relationship",
           relationTo: "users",
           label: "Test Owner",
-          admin: {
-            readOnly: true,
+          access: {
+            update: ({ req }) => isSuperAdmin(req.user),
+            create: ({ req }) => isSuperAdmin(req.user),
           },
         },
       ],

@@ -25,6 +25,8 @@ import {
 } from "@/components/ui/card";
 import { AttemptCard, AttemptCardSkeleton } from "../components/attempt-card";
 import dynamic from "next/dynamic";
+import { ProgressBySkillOutput } from "@/modules/progress/type";
+import { formatDuration } from "@/lib/utils";
 
 const SkillProgress = dynamic(
   () => import("../components/skill-progress").then((mod) => mod.SkillProgress),
@@ -68,25 +70,31 @@ export const DashboardView = () => {
     )
   );
 
-  const { data: progress } = useQuery(
-    trpc.progress.getBySkill.queryOptions({ skill })
-  );
+  const { data: progress } = useQuery(trpc.progress.getOne.queryOptions());
+
+  const progressBySkill: ProgressBySkillOutput | null = useMemo(() => {
+    const skillIdx = progress?.skill?.findIndex((s) => s.type === skill);
+    if (skillIdx !== undefined && progress?.skill) {
+      return progress.skill[skillIdx];
+    }
+    return null;
+  }, [progress, skill]);
 
   const stats = useMemo(
     () => [
       {
         key: "total-test",
         title: "Total Tests",
-        content: (progress?.totalTestsCompleted ?? 0).toString(),
+        content: (progressBySkill?.totalTestsCompleted ?? 0).toString(),
         note: "",
         Icon: BookOpen,
       },
       {
         key: "avg-score",
         title: "Average Score",
-        content: (progress?.averageScore ?? 0).toString(),
-        note: progress?.averageScore
-          ? progress?.averageScore >= 450
+        content: (progressBySkill?.averageScore ?? 0).toFixed(1),
+        note: progressBySkill?.averageScore
+          ? progressBySkill?.averageScore >= 450
             ? "You are doing great!"
             : "Keep trying!"
           : "",
@@ -95,25 +103,27 @@ export const DashboardView = () => {
       {
         key: "best-score",
         title: "Best Score",
-        content: (progress?.bestScore ?? 0).toString(),
-        note: progress?.bestScore
-          ? `${900 - progress?.bestScore} points to go`
+        content: (progressBySkill?.bestScore ?? 0).toString(),
+        note: progressBySkill?.bestScore
+          ? `${900 - progressBySkill?.bestScore} points to go`
           : "",
         Icon: Trophy,
       },
       {
-        key: "study-streak",
-        title: "Study Streak",
-        content: (progress?.studyStreak ?? 0).toString(),
-        note: progress?.studyStreak ? "Keep it up!" : "",
+        key: "study-time",
+        title: "Study Time",
+        content: formatDuration(
+          Math.ceil((progressBySkill?.totalStudyTime ?? 0) * 60)
+        ),
+        note: progressBySkill?.totalStudyTime ? "Keep it up!" : "",
         Icon: Target,
       },
     ],
     [
-      progress?.averageScore,
-      progress?.bestScore,
-      progress?.studyStreak,
-      progress?.totalTestsCompleted,
+      progressBySkill?.averageScore,
+      progressBySkill?.bestScore,
+      progressBySkill?.totalStudyTime,
+      progressBySkill?.totalTestsCompleted,
     ]
   );
 
@@ -123,7 +133,7 @@ export const DashboardView = () => {
         skill: "Listening",
         color: "bg-blue-500",
         Icon: Headphones,
-        current: progress?.skillsAverage?.find(
+        current: progressBySkill?.skillsAverage?.find(
           (subSkill) => subSkill.subSkill === "listening"
         )?.averageScore,
         target: 450,
@@ -132,13 +142,13 @@ export const DashboardView = () => {
         skill: "Reading",
         color: "bg-green-500",
         Icon: BookOpen,
-        current: progress?.skillsAverage?.find(
+        current: progressBySkill?.skillsAverage?.find(
           (subSkill) => subSkill.subSkill === "reading"
         )?.averageScore,
         target: 450,
       },
     ],
-    [progress?.skillsAverage]
+    [progressBySkill?.skillsAverage]
   );
 
   const handleChangeSkill = (skill: string) => {

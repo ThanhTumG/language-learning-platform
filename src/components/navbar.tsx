@@ -1,13 +1,20 @@
 "use client";
 
-import { BarChart3, BookOpen, LogOut, Settings, User } from "lucide-react";
+import {
+  BarChart3,
+  BookOpen,
+  LayoutDashboard,
+  LogOut,
+  Settings,
+  User,
+} from "lucide-react";
 import { Button } from "./ui/button";
 import { Poppins } from "next/font/google";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { useTRPC } from "@/trpc/client";
-import { useQuery } from "@tanstack/react-query";
-import { usePathname } from "next/navigation";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { usePathname, useRouter } from "next/navigation";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,6 +23,7 @@ import {
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
+import { toast } from "sonner";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -55,6 +63,22 @@ export const Navbar = () => {
 
   const trpc = useTRPC();
   const session = useQuery(trpc.auth.session.queryOptions());
+
+  const router = useRouter();
+  const logout = useMutation(
+    trpc.auth.logout.mutationOptions({
+      onSuccess: () => {
+        router.push("/sign-in");
+      },
+      onError: (error) => {
+        toast.error(error.message);
+      },
+    })
+  );
+
+  const handleLogout = () => {
+    logout.mutate();
+  };
 
   return (
     <nav className="border-b h-20 flex items-center justify-between lg:px-12 px-4 bg-white w-full">
@@ -117,10 +141,18 @@ export const Navbar = () => {
                 </div>
               </div>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>
-                <User className="mr-2 h-4 w-4" />
-                Profile
-              </DropdownMenuItem>
+              {session.data.user.roles &&
+              session.data.user.roles.includes("super-admin") ? (
+                <DropdownMenuItem onClick={() => router.push("/admin")}>
+                  <LayoutDashboard className="mr-2 h-4 w-4" />
+                  Admin Panel
+                </DropdownMenuItem>
+              ) : (
+                <DropdownMenuItem>
+                  <User className="mr-2 h-4 w-4" />
+                  Profile
+                </DropdownMenuItem>
+              )}
               <DropdownMenuItem>
                 <BarChart3 className="mr-2 h-4 w-4" />
                 Progress
@@ -130,7 +162,7 @@ export const Navbar = () => {
                 Settings
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={handleLogout}>
                 <LogOut className="mr-2 h-4 w-4" />
                 Log out
               </DropdownMenuItem>

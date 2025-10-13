@@ -1,5 +1,7 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
+import { User } from "@/payload-types";
+import { ClientUser } from "payload";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -71,3 +73,7 @@ export function evaluateSpeed(
     return "Very Slow";
   }
 }
+
+export const isSuperAdmin = (user: User | ClientUser | null) => {
+  return Boolean(user?.roles.includes("super-admin"));
+};
