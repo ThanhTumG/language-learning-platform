@@ -179,7 +179,6 @@ export interface Media {
 export interface Class {
   id: number;
   name: string;
-  student?: (number | User)[] | null;
   user: number | User;
   exams?: (number | Exam)[] | null;
   /**
@@ -693,7 +692,6 @@ export interface ExamsSelect<T extends boolean = true> {
  */
 export interface ClassesSelect<T extends boolean = true> {
   name?: T;
-  student?: T;
   user?: T;
   exams?: T;
   csvFile?: T;

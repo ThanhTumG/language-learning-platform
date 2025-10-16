@@ -1,16 +1,25 @@
 import { Badge } from "@/components/ui/badge";
 import { BookOpen, Calendar } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 interface Props {
+  id: string;
   name: string;
   date: string;
   score: number;
   type: "toeic" | "ielts";
 }
 
-export const AttemptCard = ({ name, date, score, type }: Props) => {
+export const AttemptCard = ({ id, name, date, score, type }: Props) => {
+  const router = useRouter();
+  const handleViewDetail = () => {
+    router.push(`/dashboard/${type}/${id}/result`);
+  };
   return (
-    <div className="flex items-center justify-between p-4 border rounded-lg">
+    <div
+      onClick={handleViewDetail}
+      className="flex items-center justify-between p-4 border rounded-lg cursor-pointer hover:bg-gray-50"
+    >
       <div className="flex items-center gap-4">
         <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
           <BookOpen className="h-6 w-6 text-blue-600" />

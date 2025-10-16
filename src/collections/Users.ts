@@ -1,7 +1,9 @@
+import { isSuperAdmin, isTeacher } from "@/lib/utils";
 import type {
   CollectionAfterDeleteHook,
   CollectionBeforeDeleteHook,
   CollectionConfig,
+  Where,
 } from "payload";
 
 /**
@@ -49,41 +51,6 @@ const cleanupRelatedUserData: CollectionAfterDeleteHook = async ({
       },
     });
     payload.logger.info(`Deleted classes owned by user ${id}`);
-
-    // 4. Unlink this user from student list of class 'Class'
-    const classesAsStudent = await payload.find({
-      collection: "classes",
-      overrideAccess: true,
-      where: {
-        student: {
-          in: [id],
-        },
-      },
-      limit: 1000,
-    });
-
-    if (classesAsStudent.docs.length > 0) {
-      // Loop each class
-      await Promise.all(
-        classesAsStudent.docs.map(async (classDoc) => {
-          const studentIds = (
-            classDoc.student?.map((student) =>
-              typeof student === "object" ? student.id : student
-            ) ?? []
-          ).filter((studentId) => studentId !== id);
-
-          await payload.update({
-            collection: "classes",
-            overrideAccess: true,
-            id: classDoc.id,
-            data: {
-              student: studentIds,
-            },
-          });
-        })
-      );
-      payload.logger.info(`Unlinked student role for deleted user ${id}`);
-    }
   } catch (error: unknown) {
     payload.logger.error(
       `Error in cleanupRelatedUserData hook for user ${id}: ${error}`
@@ -96,6 +63,37 @@ export const Users: CollectionConfig = {
   admin: {
     useAsTitle: "email",
     defaultColumns: ["email", "fullname", "createdAt"],
+  },
+  access: {
+    read: ({ req: { user } }) => {
+      if (isSuperAdmin(user)) return true;
+      if (user) {
+        const where: Where = {
+          or: [
+            { "class.user": { equals: user.id } },
+            { email: { equals: user.email } },
+          ],
+        };
+        return where;
+      }
+      return false;
+    },
+    create: ({ req }) => isSuperAdmin(req.user) || isTeacher(req.user),
+    // delete: ({ req }) => isSuperAdmin(req.user),
+    update: ({ req, id }) => {
+      if (isSuperAdmin(req.user) || isTeacher(req.user)) return true;
+      return req.user?.id === id;
+    },
+    admin({ req }) {
+      if (!req.user) {
+        return false;
+      }
+      const { roles } = req.user;
+      if (roles?.includes("super-admin") || roles?.includes("business"))
+        return true;
+
+      return false;
+    },
   },
   hooks: {
     beforeDelete: [
@@ -120,32 +118,6 @@ export const Users: CollectionConfig = {
             overrideAccess: true,
             where: { user: { equals: id } },
           });
-
-          const classesAsStudent = await payload.find({
-            collection: "classes",
-            overrideAccess: true,
-            where: { student: { in: [id] } },
-            limit: 1000,
-          });
-
-          if (classesAsStudent.docs.length > 0) {
-            await Promise.all(
-              classesAsStudent.docs.map(async (classDoc) => {
-                const studentIds = (
-                  classDoc.student?.map((student) =>
-                    typeof student === "object" ? student.id : student
-                  ) ?? []
-                ).filter((studentId) => studentId !== id);
-
-                await payload.update({
-                  collection: "classes",
-                  overrideAccess: true,
-                  id: classDoc.id,
-                  data: { student: studentIds },
-                });
-              })
-            );
-          }
 
           payload.logger.info(`Pre-deletion cleanup completed for user ${id}`);
         } catch (error) {
