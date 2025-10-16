@@ -1,6 +1,12 @@
-import type { CollectionConfig } from "payload";
+import type {
+  CollectionAfterChangeHook,
+  CollectionConfig,
+  PayloadRequest,
+} from "payload";
 import { Readable } from "stream";
 import csv from "csv-parser";
+import { isSuperAdmin } from "@/lib/utils";
+import { Class } from "@/payload-types";
 
 // Helper function để validate email
 function isValidEmail(email: string): boolean {
@@ -8,12 +14,157 @@ function isValidEmail(email: string): boolean {
   return emailRegex.test(email);
 }
 
+const syncStudentsToClass = async (doc: Class, req: PayloadRequest) => {
+  const { payload } = req;
+  // Handle csv file
+  if (doc.csvFile) {
+    try {
+      // Get file from media collection
+      const mediaDoc = await payload.findByID({
+        collection: "media",
+        id: doc.csvFile as number,
+      });
+
+      if (!mediaDoc || !mediaDoc.url) {
+        console.error("File not found");
+        return;
+      }
+      console.log("csv url", mediaDoc.url);
+
+      const emails: string[] = [];
+
+      let csvText: string;
+      try {
+        if (mediaDoc.filename) {
+          const fs = await import("fs/promises");
+          const path = await import("path");
+          const filePath = path.join(process.cwd(), "media", mediaDoc.filename);
+          csvText = await fs.readFile(filePath, "utf-8");
+        } else {
+          let fileUrl = mediaDoc.url;
+          if (fileUrl.startsWith("/")) {
+            const protocol = req.headers.get("x-forwarded-proto") || "http";
+            const host =
+              req.headers.get("host") || process.env.NEXT_PUBLIC_APP_URL;
+            fileUrl = `${protocol}://${host}${mediaDoc.url}`;
+          }
+          const response = await fetch(fileUrl);
+
+          if (!response.ok) {
+            console.error("Failed to upload CSV");
+            return;
+          }
+
+          csvText = await response.text();
+        }
+      } catch (error) {
+        console.error("Failed to read CSV:", error);
+        return;
+      }
+
+      // Tạo stream từ text
+      const stream = Readable.from([csvText]);
+
+      // Parse CSV với csv-parser
+      await new Promise<void>((resolve, reject) => {
+        stream
+          .pipe(csv())
+          .on("data", (row) => {
+            for (const [, value] of Object.entries(row)) {
+              const emailValue = String(value).trim();
+              if (emailValue && isValidEmail(emailValue)) {
+                emails.push(emailValue);
+                break;
+              }
+            }
+          })
+          .on("end", () => {
+            resolve();
+          })
+          .on("error", (error) => {
+            console.error("Error parse CSV:", error);
+            reject(error);
+          });
+      });
+
+      console.log(`Found ${emails.length} email included in CSV`);
+      console.log("Class data", doc);
+
+      // Sử dụng Promise.all để xử lý song song, tăng tốc độ
+      await Promise.all(
+        emails.map(async (email) => {
+          try {
+            const { docs: existingUsers } = await payload.find({
+              collection: "users",
+              where: { email: { equals: email } },
+              depth: 0,
+              limit: 1,
+            });
+
+            if (existingUsers.length > 0) {
+              const user = existingUsers[0];
+              const userClasses = user.class || [];
+              if (!userClasses.includes(doc.id)) {
+                await payload.update({
+                  collection: "users",
+                  id: user.id,
+                  data: {
+                    class: [...userClasses, doc.id],
+                  },
+                  depth: 0, // Quan trọng: không populate sâu
+                });
+              }
+            } else {
+              // Tạo user mới
+              await payload.create({
+                collection: "users",
+                data: {
+                  email: email,
+                  password: "student123",
+                  fullname: email.split("@")[0],
+                  roles: ["user"],
+                  class: [doc.id],
+                },
+              });
+            }
+          } catch (e) {
+            payload.logger.error(`Error processing email ${email}: ${e}`);
+          }
+        })
+      );
+    } catch (error) {
+      console.error("Error handle CSV:", error);
+    }
+  }
+};
+
+const afterChangeHook: CollectionAfterChangeHook<Class> = ({
+  doc,
+  operation,
+  req,
+}) => {
+  if (operation !== "create" && operation !== "update") return;
+  // "Bắn và Quên": Thực thi hàm đồng bộ nhưng không `await`
+  // Giao dịch chính sẽ kết thúc ngay lập tức và giải phóng lock
+  syncStudentsToClass(doc, req).catch((err) => {
+    req.payload.logger.error(`Failed to sync students in background: ${err}`);
+  });
+  return doc;
+};
+
 export const Classes: CollectionConfig = {
   slug: "classes",
   admin: {
     useAsTitle: "name",
   },
   access: {
+    read: ({ req: { user } }) => {
+      if (isSuperAdmin(user)) return true;
+      if (user) {
+        return { user: { equals: user.id } };
+      }
+      return false;
+    },
     create: ({ req: { user } }) => !!user,
     update: ({ req: { user } }) => {
       if (user) {
@@ -41,12 +192,6 @@ export const Classes: CollectionConfig = {
       name: "name",
       type: "text",
       required: true,
-    },
-    {
-      name: "student",
-      type: "relationship",
-      relationTo: "users",
-      hasMany: true,
     },
     {
       name: "user",
@@ -78,150 +223,8 @@ export const Classes: CollectionConfig = {
         if (operation === "create" && req.user) {
           data.user = req.user.id;
         }
-
-        if (operation !== "create" && operation !== "update") return;
-
-        // Handle csv file
-        if (data.csvFile) {
-          try {
-            // Get file from media collection
-            const mediaDoc = await req.payload.findByID({
-              collection: "media",
-              id: data.csvFile,
-            });
-
-            if (!mediaDoc || !mediaDoc.url) {
-              console.error("File not found");
-              return;
-            }
-
-            console.log("csv url", mediaDoc.url);
-
-            const emails: string[] = [];
-
-            let csvText: string;
-            try {
-              if (mediaDoc.filename) {
-                const fs = await import("fs/promises");
-                const path = await import("path");
-                const filePath = path.join(
-                  process.cwd(),
-                  "media",
-                  mediaDoc.filename
-                );
-                csvText = await fs.readFile(filePath, "utf-8");
-              } else {
-                let fileUrl = mediaDoc.url;
-                if (fileUrl.startsWith("/")) {
-                  const protocol =
-                    req.headers.get("x-forwarded-proto") || "http";
-                  const host =
-                    req.headers.get("host") || process.env.NEXT_PUBLIC_APP_URL;
-                  fileUrl = `${protocol}://${host}${mediaDoc.url}`;
-                }
-                const response = await fetch(fileUrl);
-
-                if (!response.ok) {
-                  console.error("Failed to upload CSV");
-                  return;
-                }
-
-                csvText = await response.text();
-              }
-            } catch (error) {
-              console.error("Failed to read CSV:", error);
-              return;
-            }
-
-            // Tạo stream từ text
-            const stream = Readable.from([csvText]);
-
-            // Parse CSV với csv-parser
-            await new Promise<void>((resolve, reject) => {
-              stream
-                .pipe(csv())
-                .on("data", (row) => {
-                  for (const [, value] of Object.entries(row)) {
-                    const emailValue = String(value).trim();
-                    if (emailValue && isValidEmail(emailValue)) {
-                      emails.push(emailValue);
-                      break;
-                    }
-                  }
-                })
-                .on("end", () => {
-                  resolve();
-                })
-                .on("error", (error) => {
-                  console.error("Error parse CSV:", error);
-                  reject(error);
-                });
-            });
-
-            console.log(`Found ${emails.length} email included in CSV`);
-
-            // Handle each email
-            const existingStudentIds = data.student || [];
-            const newStudentIds: number[] = [];
-
-            for (const email of emails) {
-              try {
-                const existingUsers = await req.payload.find({
-                  collection: "users",
-                  where: {
-                    email: {
-                      equals: email,
-                    },
-                  },
-                  limit: 1,
-                });
-
-                if (existingUsers.docs.length > 0) {
-                  // Existed email, add to new student list
-                  const existingUser = existingUsers.docs[0];
-                  const existingId = Number(existingUser.id);
-                  if (!existingStudentIds.includes(existingId)) {
-                    newStudentIds.push(existingId);
-                  }
-                  console.log(`Email ${email} was existed, add to class`);
-                } else {
-                  // Create new user
-                  const tempPassword = "student123";
-                  const newUser = await req.payload.create({
-                    collection: "users",
-                    data: {
-                      email: email,
-                      password: tempPassword,
-                      fullname: email.split("@")[0],
-                      roles: ["user"],
-                    },
-                  });
-
-                  newStudentIds.push(Number(newUser.id));
-                  console.log(
-                    `Create new user with email: ${email}, password: ${tempPassword}`
-                  );
-                }
-              } catch (error) {
-                console.error(`Error ${email} handler:`, error);
-              }
-            }
-
-            // Update student list
-            if (newStudentIds.length > 0) {
-              const updatedStudentIds = [
-                ...existingStudentIds,
-                ...newStudentIds,
-              ];
-
-              data.student = updatedStudentIds;
-              console.log(`Add ${newStudentIds.length} new student into class`);
-            }
-          } catch (error) {
-            console.error("Error handle CSV:", error);
-          }
-        }
       },
     ],
+    afterChange: [afterChangeHook],
   },
 };

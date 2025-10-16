@@ -6,6 +6,15 @@ import { useSuspenseInfiniteQuery } from "@tanstack/react-query";
 import { Suspense } from "react";
 import { TestCard, TestCardSkeleton } from "../components/test-card";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useRouter } from "next/navigation";
 interface Props {
   testType: string;
 }
@@ -30,6 +39,11 @@ export const TestPracticesView = ({ testType }: Props) => {
     )
   );
 
+  const router = useRouter();
+  const handleChangeType = (value: string) => {
+    router.push(`/test-practices/${value}`);
+  };
+
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl">
       <div className="mb-6 flex justify-between">
@@ -40,6 +54,25 @@ export const TestPracticesView = ({ testType }: Props) => {
           <p className="text-gray-600">
             Choose a practice test to view details and start your preparation
           </p>
+        </div>
+
+        {/* Exam Type Selector */}
+        <div className="flex items-center gap-3">
+          <Label
+            htmlFor="exam-type-select"
+            className="text-sm text-muted-foreground"
+          >
+            Select Exam:
+          </Label>
+          <Select value={testType} onValueChange={handleChangeType}>
+            <SelectTrigger id="exam-type-select" className="w-[140px] bg-white">
+              <SelectValue placeholder="Select exam" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="toeic">TOEIC</SelectItem>
+              <SelectItem value="ielts">IELTS</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
 

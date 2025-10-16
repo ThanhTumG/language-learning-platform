@@ -77,3 +77,7 @@ export function evaluateSpeed(
 export const isSuperAdmin = (user: User | ClientUser | null) => {
   return Boolean(user?.roles.includes("super-admin"));
 };
+
+export const isTeacher = (user: User | ClientUser | null) => {
+  return Boolean(user?.roles.includes("business"));
+};

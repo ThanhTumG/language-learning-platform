@@ -52,15 +52,10 @@ export const DashboardView = () => {
   const [skill, setSkill] = useState<Skills>(Skills.TOEIC);
   const trpc = useTRPC();
 
-  const {
-    data: ToeicData,
-    hasNextPage,
-    fetchNextPage,
-    isFetchingNextPage,
-  } = useSuspenseInfiniteQuery(
+  const { data: ToeicData } = useSuspenseInfiniteQuery(
     trpc.toeicAttempts.getMany.infiniteQueryOptions(
       {
-        limit: DEFAULT_LIMIT,
+        limit: 5,
       },
       {
         getNextPageParam: (lastPage) => {
@@ -92,7 +87,7 @@ export const DashboardView = () => {
       {
         key: "avg-score",
         title: "Average Score",
-        content: (progressBySkill?.averageScore ?? 0).toFixed(1),
+        content: Math.ceil(progressBySkill?.averageScore ?? 0),
         note: progressBySkill?.averageScore
           ? progressBySkill?.averageScore >= 450
             ? "You are doing great!"
@@ -207,10 +202,17 @@ export const DashboardView = () => {
           {/* Recent Tests */}
           <Card>
             <CardHeader>
-              <CardTitle>Recent Test Results</CardTitle>
-              <CardDescription>
-                Your latest practice test scores and performance
-              </CardDescription>
+              <div className="flex justify-between">
+                <div>
+                  <CardTitle>Recent Test Results</CardTitle>
+                  <CardDescription>
+                    Your latest practice test scores and performance
+                  </CardDescription>
+                </div>
+                <Button variant="link" className="">
+                  View all
+                </Button>
+              </div>
             </CardHeader>
             <CardContent>
               <Suspense fallback={<RecentTestSkeleton />}>
@@ -220,6 +222,7 @@ export const DashboardView = () => {
                       page.docs.map((attempt) => (
                         <AttemptCard
                           key={attempt.id}
+                          id={attempt.id.toString()}
                           date={new Date(attempt.updatedAt).toLocaleString(
                             "vi-VN"
                           )}
@@ -229,18 +232,6 @@ export const DashboardView = () => {
                         />
                       ))
                     )}
-                </div>
-                <div className="flex justify-center pt-8">
-                  {hasNextPage && (
-                    <Button
-                      variant="outline"
-                      disabled={isFetchingNextPage}
-                      onClick={() => fetchNextPage()}
-                      className="font-medium disabled:opacity-50 text-base bg-white"
-                    >
-                      Load more
-                    </Button>
-                  )}
                 </div>
               </Suspense>
             </CardContent>
