@@ -8,7 +8,13 @@ export const Toeic: CollectionConfig = {
     defaultColumns: ["title", "duration", "totalQuestions", "createdAt"],
   },
   access: {
-    read: () => true,
+    read: ({ req: { user } }) => {
+      if (isSuperAdmin(user)) return true;
+      if (user) {
+        return { "metadata.createdBy": { equals: user.id } };
+      }
+      return false;
+    },
   },
   fields: [
     {

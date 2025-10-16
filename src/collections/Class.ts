@@ -116,7 +116,7 @@ const syncStudentsToClass = async (doc: Class, req: PayloadRequest) => {
               }
             } else {
               // Tạo user mới
-              await payload.create({
+              const { id } = await payload.create({
                 collection: "users",
                 data: {
                   email: email,
@@ -124,6 +124,27 @@ const syncStudentsToClass = async (doc: Class, req: PayloadRequest) => {
                   fullname: email.split("@")[0],
                   roles: ["user"],
                   class: [doc.id],
+                },
+              });
+
+              await payload.create({
+                collection: "progress",
+                data: {
+                  user: id,
+                  skill: [
+                    {
+                      type: "toeic",
+                      averageScore: 0,
+                      bestScore: 0,
+                      totalStudyTime: 0,
+                      learningGoals: { targetScore: undefined },
+                      skillsAverage: [
+                        { subSkill: "listening", averageScore: 0 },
+                        { subSkill: "reading", averageScore: 0 },
+                      ],
+                      totalTestsCompleted: 0,
+                    },
+                  ],
                 },
               });
             }

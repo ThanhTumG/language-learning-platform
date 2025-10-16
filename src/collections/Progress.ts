@@ -1,4 +1,5 @@
-import type { CollectionConfig } from "payload";
+import { isSuperAdmin } from "@/lib/utils";
+import type { CollectionConfig, Where } from "payload";
 
 export const Progress: CollectionConfig = {
   slug: "progress",
@@ -6,6 +7,18 @@ export const Progress: CollectionConfig = {
     useAsTitle: "user",
     defaultColumns: ["user", "updatedAt"],
     listSearchableFields: ["user"],
+  },
+  access: {
+    read: ({ req: { user } }) => {
+      if (isSuperAdmin(user)) return true;
+      if (user) {
+        const where: Where = {
+          "user.class.user": { equals: user.id },
+        };
+        return where;
+      }
+      return false;
+    },
   },
   fields: [
     {

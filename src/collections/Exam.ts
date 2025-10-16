@@ -1,9 +1,11 @@
+import { isSuperAdmin } from "@/lib/utils";
 import type { CollectionConfig } from "payload";
 
 export const Exams: CollectionConfig = {
   slug: "exams",
   admin: {
     useAsTitle: "title",
+    hidden: ({ user }) => !isSuperAdmin(user),
   },
   fields: [
     {

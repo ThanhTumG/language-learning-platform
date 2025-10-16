@@ -1,3 +1,4 @@
+import { isSuperAdmin } from "@/lib/utils";
 import type { CollectionConfig } from "payload";
 
 export const Parts: CollectionConfig = {
@@ -7,7 +8,13 @@ export const Parts: CollectionConfig = {
     defaultColumns: ["name", "sectionType", "questionCount", "createdAt"],
   },
   access: {
-    read: () => true,
+    read: ({ req: { user } }) => {
+      if (isSuperAdmin(user)) return true;
+      if (user) {
+        return { createdBy: { equals: user.id } };
+      }
+      return false;
+    },
   },
   fields: [
     {
@@ -86,11 +93,24 @@ export const Parts: CollectionConfig = {
       ],
     },
     {
-      name: "toeic",
+      name: "createdBy",
       type: "relationship",
-      relationTo: "toeic",
-      hasMany: false,
+      relationTo: "users",
+      label: "Test Owner",
+      access: {
+        update: ({ req }) => isSuperAdmin(req.user),
+        create: ({ req }) => isSuperAdmin(req.user),
+      },
     },
   ],
+  hooks: {
+    beforeChange: [
+      ({ data, operation, req }) => {
+        if (operation === "create" && req.user) {
+          data.createdBy = req.user.id;
+        }
+      },
+    ],
+  },
   timestamps: true,
 };

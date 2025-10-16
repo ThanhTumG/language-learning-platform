@@ -1,3 +1,4 @@
+import { isSuperAdmin } from "@/lib/utils";
 import { ScoreByPartType } from "@/modules/toeic-attempts/type";
 import type { CollectionConfig } from "payload";
 
@@ -8,24 +9,10 @@ export const ToeicAttempt: CollectionConfig = {
     defaultColumns: ["user", "test", "score>total", "status", "createdAt"],
   },
   access: {
-    create: ({ req: { user } }) => !!user,
-    update: ({ req: { user } }) => {
+    read: ({ req: { user } }) => {
+      if (isSuperAdmin(user)) return true;
       if (user) {
-        return {
-          user: {
-            equals: user.id,
-          },
-        };
-      }
-      return false;
-    },
-    delete: ({ req: { user } }) => {
-      if (user) {
-        return {
-          user: {
-            equals: user.id,
-          },
-        };
+        return { "user.class.user": { equals: user.id } };
       }
       return false;
     },
@@ -36,9 +23,6 @@ export const ToeicAttempt: CollectionConfig = {
       type: "relationship",
       relationTo: "users",
       required: true,
-      admin: {
-        readOnly: true,
-      },
     },
     {
       name: "test",
@@ -215,11 +199,8 @@ export const ToeicAttempt: CollectionConfig = {
   ],
   hooks: {
     beforeChange: [
-      ({ data, operation, req }) => {
-        if (operation === "create" && req.user) {
-          data.user = req.user.id;
-        }
-
+      ({ data, operation }) => {
+        if (operation !== "create" && operation !== "update") return;
         const scoreByPart: ScoreByPartType = data.parts;
         if (scoreByPart && scoreByPart.length > 0) {
           const totalQuestions = scoreByPart.reduce(

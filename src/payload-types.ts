@@ -284,7 +284,7 @@ export interface Part {
         id?: string | null;
       }[]
     | null;
-  toeic?: (number | null) | Toeic;
+  createdBy?: (number | null) | User;
   updatedAt: string;
   createdAt: string;
 }
@@ -571,7 +571,7 @@ export interface PartsSelect<T extends boolean = true> {
             };
         id?: T;
       };
-  toeic?: T;
+  createdBy?: T;
   updatedAt?: T;
   createdAt?: T;
 }
