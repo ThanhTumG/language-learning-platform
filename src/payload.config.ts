@@ -29,6 +29,17 @@ export default buildConfig({
       graphics: {
         Logo: "/app/(payload)/admin/components/Logo.tsx",
       },
+      views: {
+        statisticsView: {
+          Component: "/app/(payload)/admin/components/StatisticsFrame.tsx",
+          path: "/statistics",
+        },
+      },
+      afterNavLinks: [
+        {
+          path: "/app/(payload)/admin/components/StatisticsLink.tsx",
+        },
+      ],
     },
   },
   collections: [
