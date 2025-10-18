@@ -27,7 +27,7 @@ export default async function Page({ params }: Props) {
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
-      <ResultView test={test} attemptId={attemptId} />;
+      <ResultView test={test} attemptId={attemptId} />
     </HydrationBoundary>
   );
 }

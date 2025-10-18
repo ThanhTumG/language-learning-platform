@@ -1,43 +1,33 @@
 import { Part } from "@/payload-types";
-import { baseProcedure, createTRPCRouter } from "@/trpc/init";
+import {
+  baseProcedure,
+  createTRPCRouter,
+  protectedProcedure,
+} from "@/trpc/init";
 import { TRPCError } from "@trpc/server";
 import z from "zod";
 
-export const toeicTestsRouter = createTRPCRouter({
-  getMany: baseProcedure
-    .input(
-      z.object({
-        cursor: z.number().default(1),
-        limit: z.number().default(10),
-      })
-    )
-    .query(async ({ ctx, input }) => {
-      const testsData = await ctx.db.find({
-        collection: "toeic",
-        sort: "-createdAt",
-        limit: input.limit,
-        page: input.cursor,
-        where: {
-          and: [
-            {
-              "metadata.createdBy.roles": { contains: "super-admin" },
-            },
-            {
-              "metadata.isPublished": {
-                equals: true,
-              },
-            },
-          ],
+export const examsRouter = createTRPCRouter({
+  getMany: protectedProcedure.query(async ({ ctx }) => {
+    const classesId = ctx.session.user.class?.map((c) =>
+      typeof c === "object" ? c.id : c
+    );
+    const classes = await ctx.db.find({
+      collection: "classes",
+      pagination: false,
+      sort: "-createdAt",
+      where: {
+        id: {
+          in: classesId,
         },
-        select: {
-          audioFile: false,
-          answers: false,
-          parts: false,
-        },
-      });
+      },
+    });
 
-      return testsData;
-    }),
+    const exams = classes.docs.flatMap((doc) => doc.exams?.map((e) => e));
+    console.log({ exams });
+
+    return exams;
+  }),
   getOne: baseProcedure
     .input(z.object({ testId: z.string() }))
     .query(async ({ ctx, input }) => {

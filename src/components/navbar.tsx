@@ -49,7 +49,7 @@ const NavbarItem = ({ href, children }: NavbarItemProps) => {
 const navbarItems = [
   { href: "/dashboard", children: "Dashboard" },
   { href: "/test-practices/toeic", children: "Test Practices" },
-  { href: "/overall", children: "Overall" },
+  { href: "/exams", children: "Exams" },
 ];
 
 export const Navbar = () => {
