@@ -1,4 +1,4 @@
-import { Part } from "@/payload-types";
+import { Part, Toeic } from "@/payload-types";
 import {
   baseProcedure,
   createTRPCRouter,
@@ -23,8 +23,12 @@ export const examsRouter = createTRPCRouter({
       },
     });
 
-    const exams = classes.docs.flatMap((doc) => doc.exams?.map((e) => e));
-    console.log({ exams });
+    const exams = classes.docs.flatMap((doc) =>
+      doc.exams?.map((e) => {
+        if (typeof e === "number") return null;
+        return { ...e, test: e.test as Toeic };
+      })
+    );
 
     return exams;
   }),
