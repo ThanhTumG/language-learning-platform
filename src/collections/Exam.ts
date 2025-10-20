@@ -22,6 +22,7 @@ export const Exams: CollectionConfig = {
       type: "relationship",
       relationTo: "toeic",
       hasMany: false,
+      required: true,
     },
     {
       name: "results",
@@ -48,6 +49,14 @@ export const Exams: CollectionConfig = {
           pickerAppearance: "dayAndTime",
         },
       },
+    },
+    {
+      name: "numberOfParticipants",
+      type: "number",
+      admin: {
+        readOnly: true,
+      },
+      defaultValue: 0,
     },
   ],
 };

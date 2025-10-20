@@ -196,10 +196,11 @@ export interface Exam {
   id: number;
   title: string;
   description?: string | null;
-  test?: (number | null) | Toeic;
+  test: number | Toeic;
   results?: (number | ToeicAttempt)[] | null;
   startTime: string;
   endTime: string;
+  numberOfParticipants?: number | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -683,6 +684,7 @@ export interface ExamsSelect<T extends boolean = true> {
   results?: T;
   startTime?: T;
   endTime?: T;
+  numberOfParticipants?: T;
   updatedAt?: T;
   createdAt?: T;
 }
