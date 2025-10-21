@@ -48,9 +48,7 @@ export const TestPracticesView = ({ testType }: Props) => {
     <div className="container mx-auto px-4 py-8 max-w-6xl">
       <div className="mb-6 flex justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Practice Tests
-          </h1>
+          <h1 className="text-3xl font-bold text-gray-900">Practice Tests</h1>
           <p className="text-gray-600">
             Choose a practice test to view details and start your preparation
           </p>

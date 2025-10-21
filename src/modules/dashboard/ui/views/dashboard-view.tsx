@@ -15,7 +15,7 @@ import {
   Trophy,
 } from "lucide-react";
 import { Suspense, useMemo, useState } from "react";
-import { StatCardSkeleton } from "../components/stat-card";
+import { StatCard, StatCardSkeleton } from "../components/stat-card";
 import {
   Card,
   CardContent,
@@ -26,20 +26,12 @@ import {
 import { AttemptCard, AttemptCardSkeleton } from "../components/attempt-card";
 import dynamic from "next/dynamic";
 import { ProgressBySkillOutput } from "@/modules/progress/type";
-import { formatDuration } from "@/lib/utils";
+import { formatDate, formatDuration } from "@/lib/utils";
 
 const SkillProgress = dynamic(
   () => import("../components/skill-progress").then((mod) => mod.SkillProgress),
   {
     ssr: false,
-  }
-);
-
-const StatCard = dynamic(
-  () => import("../components/stat-card").then((mod) => mod.StatCard),
-  {
-    ssr: false,
-    loading: () => <StatCardSkeleton />,
   }
 );
 
@@ -75,53 +67,6 @@ export const DashboardView = () => {
     return null;
   }, [progress, skill]);
 
-  const stats = useMemo(
-    () => [
-      {
-        key: "total-test",
-        title: "Total Tests",
-        content: (progressBySkill?.totalTestsCompleted ?? 0).toString(),
-        note: "",
-        Icon: BookOpen,
-      },
-      {
-        key: "avg-score",
-        title: "Average Score",
-        content: Math.ceil(progressBySkill?.averageScore ?? 0),
-        note: progressBySkill?.averageScore
-          ? progressBySkill?.averageScore >= 450
-            ? "You are doing great!"
-            : "Keep trying!"
-          : "",
-        Icon: Award,
-      },
-      {
-        key: "best-score",
-        title: "Best Score",
-        content: (progressBySkill?.bestScore ?? 0).toString(),
-        note: progressBySkill?.bestScore
-          ? `${900 - progressBySkill?.bestScore} points to go`
-          : "",
-        Icon: Trophy,
-      },
-      {
-        key: "study-time",
-        title: "Study Time",
-        content: formatDuration(
-          Math.ceil((progressBySkill?.totalStudyTime ?? 0) * 60)
-        ),
-        note: progressBySkill?.totalStudyTime ? "Keep it up!" : "",
-        Icon: Target,
-      },
-    ],
-    [
-      progressBySkill?.averageScore,
-      progressBySkill?.bestScore,
-      progressBySkill?.totalStudyTime,
-      progressBySkill?.totalTestsCompleted,
-    ]
-  );
-
   const toeicSkillsProgress = useMemo(
     () => [
       {
@@ -153,13 +98,13 @@ export const DashboardView = () => {
   return (
     <div className="container mx-auto px-4 py-8 max-w-7xl">
       {/* Welcome Section */}
-      <div className="mb-8">
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+      <div className="mb-6">
+        <div className="flex flex-col lg:flex-row lg:justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">
               Welcome back! 👋
             </h1>
-            <p className="text-gray-600 mt-1">
+            <p className="text-gray-600">
               Continue your {skill.toUpperCase()} preparation journey
             </p>
           </div>
@@ -184,15 +129,53 @@ export const DashboardView = () => {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        {stats.map((stat) => (
+        <Suspense
+          fallback={
+            <>
+              <StatCardSkeleton />
+              <StatCardSkeleton />
+              <StatCardSkeleton />
+              <StatCardSkeleton />
+            </>
+          }
+        >
           <StatCard
-            key={stat.key as string}
-            title={stat.title}
-            content={stat.content as string}
-            note={stat.note}
-            Icon={stat.Icon}
+            title="Total Tests"
+            content={(progressBySkill?.totalTestsCompleted ?? 0).toString()}
+            note=""
+            Icon={BookOpen}
           />
-        ))}
+          <StatCard
+            title="Average Score"
+            content={Math.ceil(progressBySkill?.averageScore ?? 0).toString()}
+            note={
+              progressBySkill?.averageScore
+                ? progressBySkill?.averageScore >= 450
+                  ? "You are doing great!"
+                  : "Keep trying!"
+                : ""
+            }
+            Icon={Award}
+          />
+          <StatCard
+            title="Best Score"
+            content={(progressBySkill?.bestScore ?? 0).toString()}
+            note={
+              progressBySkill?.bestScore
+                ? `${900 - progressBySkill?.bestScore} points to go`
+                : ""
+            }
+            Icon={Trophy}
+          />
+          <StatCard
+            title="Study Time"
+            content={formatDuration(
+              Math.ceil((progressBySkill?.totalStudyTime ?? 0) * 60)
+            )}
+            note={progressBySkill?.totalStudyTime ? "Keep it up!" : ""}
+            Icon={Target}
+          />
+        </Suspense>
       </div>
 
       {/* Main Content Grid */}

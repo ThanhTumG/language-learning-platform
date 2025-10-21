@@ -1,4 +1,4 @@
-import { ExamsView } from "@/modules/exams/ui/components/views/exams-view";
+import { ExamsView } from "@/modules/exams/ui/views/exams-view";
 import { caller, getQueryClient, trpc } from "@/trpc/server";
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import { redirect } from "next/navigation";
