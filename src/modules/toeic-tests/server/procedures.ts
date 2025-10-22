@@ -64,7 +64,7 @@ export const toeicTestsRouter = createTRPCRouter({
 
       return {
         ...testData,
-        parts: parts as Part[] | [],
+        parts: parts as Part[],
       };
     }),
 });

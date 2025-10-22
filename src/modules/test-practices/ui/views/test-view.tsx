@@ -12,6 +12,7 @@ import {
 import { useTRPC } from "@/trpc/client";
 import { useQuery } from "@tanstack/react-query";
 import {
+  ArrowLeft,
   BookOpen,
   CheckCircle2,
   Headphones,
@@ -47,8 +48,14 @@ export const TestView = ({ testType, testId }: Props) => {
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
+      <Button variant="ghost" asChild>
+        <Link href={`/test-practices/${testType}`}>
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Back to Test Practices
+        </Link>
+      </Button>
       {/* Test Overview Card */}
-      <Card className="mb-8">
+      <Card className="my-8">
         <CardHeader>
           <div className="flex items-start justify-between mb-4">
             <div className="space-y-2">

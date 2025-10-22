@@ -8,6 +8,7 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import { Calendar, Flame, Trophy } from "lucide-react";
 import { useMemo, useState } from "react";
 import { ExamCard } from "../components/exam-card";
+import { getExamStatus } from "@/lib/utils";
 
 export const ExamsView = () => {
   const [filter, setFilter] = useState<"all" | "active" | "upcoming" | "ended">(
@@ -17,16 +18,6 @@ export const ExamsView = () => {
   const trpc = useTRPC();
 
   const { data } = useSuspenseQuery(trpc.exams.getMany.queryOptions());
-
-  const getExamStatus = (start: string, end: string) => {
-    const now = new Date();
-    const startDate = new Date(start);
-    const endDate = new Date(end);
-
-    if (now < startDate) return "upcoming";
-    if (now > endDate) return "ended";
-    return "active";
-  };
 
   const filteredExams: ExamsGetManyOutput = useMemo(() => {
     if (typeof data !== "object") return [];

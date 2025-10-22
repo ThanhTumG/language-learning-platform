@@ -1,16 +1,11 @@
 import { DEFAULT_LIMIT } from "@/constants";
 import { DashboardView } from "@/modules/dashboard/ui/views/dashboard-view";
-import { caller, getQueryClient, trpc } from "@/trpc/server";
+import { getQueryClient, trpc } from "@/trpc/server";
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
-import { redirect } from "next/navigation";
+import { Suspense } from "react";
 
 export default async function Page() {
   const queryClient = getQueryClient();
-
-  const { user } = await caller.auth.session();
-  if (!user) {
-    redirect("/sign-in");
-  }
 
   void queryClient.prefetchInfiniteQuery(
     trpc.toeicAttempts.getMany.infiniteQueryOptions({
@@ -22,7 +17,9 @@ export default async function Page() {
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
-      <DashboardView />
+      <Suspense fallback={<div>Loading dashboard...</div>}>
+        <DashboardView />
+      </Suspense>
     </HydrationBoundary>
   );
 }

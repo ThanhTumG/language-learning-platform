@@ -19,8 +19,9 @@ export const formatTime = (seconds: number) => {
   return `${minutes}:${secs.toString().padStart(2, "0")}`;
 };
 
-export const formatDate = (dateString: string) => {
-  return new Date(dateString).toLocaleDateString("vi-VN", {
+export const formatDate = (dateString: string | undefined) => {
+  if (!dateString) return "";
+  return new Date(dateString).toLocaleDateString("en-US", {
     month: "short",
     day: "numeric",
     year: "numeric",
@@ -104,4 +105,14 @@ export const isSuperAdmin = (user: User | ClientUser | null) => {
 
 export const isTeacher = (user: User | ClientUser | null) => {
   return Boolean(user?.roles.includes("business"));
+};
+
+export const getExamStatus = (start: string, end: string) => {
+  const now = new Date();
+  const startDate = new Date(start);
+  const endDate = new Date(end);
+
+  if (now < startDate) return "upcoming";
+  if (now > endDate) return "ended";
+  return "active";
 };

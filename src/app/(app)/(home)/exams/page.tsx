@@ -1,20 +1,17 @@
 import { ExamsView } from "@/modules/exams/ui/views/exams-view";
-import { caller, getQueryClient, trpc } from "@/trpc/server";
+import { getQueryClient, trpc } from "@/trpc/server";
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
-import { redirect } from "next/navigation";
+import { Suspense } from "react";
 
 export default async function Page() {
   const queryClient = getQueryClient();
-  const { user } = await caller.auth.session();
-  if (!user) {
-    redirect("/sign-in");
-  }
-
   void queryClient.prefetchQuery(trpc.exams.getMany.queryOptions());
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
-      <ExamsView />
+      <Suspense fallback={<div>Loading exams...</div>}>
+        <ExamsView />
+      </Suspense>
     </HydrationBoundary>
   );
 }
