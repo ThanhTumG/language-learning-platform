@@ -14,8 +14,8 @@ import {
   Target,
   Trophy,
 } from "lucide-react";
-import { Suspense, useMemo, useState } from "react";
-import { StatCard, StatCardSkeleton } from "../components/stat-card";
+import { useMemo, useState } from "react";
+import { StatCard } from "../components/stat-card";
 import {
   Card,
   CardContent,
@@ -129,53 +129,42 @@ export const DashboardView = () => {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <Suspense
-          fallback={
-            <>
-              <StatCardSkeleton />
-              <StatCardSkeleton />
-              <StatCardSkeleton />
-              <StatCardSkeleton />
-            </>
+        <StatCard
+          title="Total Tests"
+          content={(progressBySkill?.totalTestsCompleted ?? 0).toString()}
+          note=""
+          Icon={BookOpen}
+        />
+        <StatCard
+          title="Average Score"
+          content={Math.ceil(progressBySkill?.averageScore ?? 0).toString()}
+          note={
+            progressBySkill?.averageScore
+              ? progressBySkill?.averageScore >= 450
+                ? "You are doing great!"
+                : "Keep trying!"
+              : ""
           }
-        >
-          <StatCard
-            title="Total Tests"
-            content={(progressBySkill?.totalTestsCompleted ?? 0).toString()}
-            note=""
-            Icon={BookOpen}
-          />
-          <StatCard
-            title="Average Score"
-            content={Math.ceil(progressBySkill?.averageScore ?? 0).toString()}
-            note={
-              progressBySkill?.averageScore
-                ? progressBySkill?.averageScore >= 450
-                  ? "You are doing great!"
-                  : "Keep trying!"
-                : ""
-            }
-            Icon={Award}
-          />
-          <StatCard
-            title="Best Score"
-            content={(progressBySkill?.bestScore ?? 0).toString()}
-            note={
-              progressBySkill?.bestScore
-                ? `${900 - progressBySkill?.bestScore} points to go`
-                : ""
-            }
-            Icon={Trophy}
-          />
-          <StatCard
-            title="Study Time"
-            content={formatDuration(
-              Math.ceil((progressBySkill?.totalStudyTime ?? 0) * 60)
-            )}
-            note={progressBySkill?.totalStudyTime ? "Keep it up!" : ""}
-            Icon={Target}
-          />
-        </Suspense>
+          Icon={Award}
+        />
+        <StatCard
+          title="Best Score"
+          content={(progressBySkill?.bestScore ?? 0).toString()}
+          note={
+            progressBySkill?.bestScore
+              ? `${900 - progressBySkill?.bestScore} points to go`
+              : ""
+          }
+          Icon={Trophy}
+        />
+        <StatCard
+          title="Study Time"
+          content={formatDuration(
+            Math.ceil((progressBySkill?.totalStudyTime ?? 0) * 60)
+          )}
+          note={progressBySkill?.totalStudyTime ? "Keep it up!" : ""}
+          Icon={Target}
+        />
       </div>
 
       {/* Main Content Grid */}
@@ -198,23 +187,21 @@ export const DashboardView = () => {
               </div>
             </CardHeader>
             <CardContent>
-              <Suspense fallback={<RecentTestSkeleton />}>
-                <div className="space-y-4">
-                  {skill === Skills.TOEIC &&
-                    ToeicData.pages.flatMap((page) =>
-                      page.docs.map((attempt) => (
-                        <AttemptCard
-                          key={attempt.id}
-                          id={attempt.id.toString()}
-                          date={formatDate(attempt.updatedAt)}
-                          name={attempt.attemptTitle as string}
-                          score={attempt.scores?.total || 0}
-                          type="toeic"
-                        />
-                      ))
-                    )}
-                </div>
-              </Suspense>
+              <div className="space-y-4">
+                {skill === Skills.TOEIC &&
+                  ToeicData.pages.flatMap((page) =>
+                    page.docs.map((attempt) => (
+                      <AttemptCard
+                        key={attempt.id}
+                        id={attempt.id.toString()}
+                        date={formatDate(attempt.updatedAt)}
+                        name={attempt.attemptTitle as string}
+                        score={attempt.scores?.total || 0}
+                        type="toeic"
+                      />
+                    ))
+                  )}
+              </div>
             </CardContent>
           </Card>
         </div>

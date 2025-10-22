@@ -8,15 +8,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { formatDate, getTimeRemaining } from "@/lib/utils";
-import {
-  Calendar,
-  CheckCircle,
-  Clock,
-  Flame,
-  Play,
-  Target,
-  Users,
-} from "lucide-react";
+import { Calendar, Clock, Flame, Target, Users } from "lucide-react";
 import Link from "next/link";
 
 interface Props {
@@ -45,7 +37,6 @@ export const ExamCard = ({
   testType,
 }: Props) => {
   const isActive = status === "active";
-  const isUpcoming = status === "upcoming";
   const isEnded = status === "ended";
   return (
     <Card
@@ -131,26 +122,7 @@ export const ExamCard = ({
 
         {/* Action Button */}
         <Button className="w-full" disabled={!isActive} asChild>
-          <Link href={`/test-practices/${testType}/${id}`}>
-            {isActive && (
-              <>
-                <Play className="mr-2 h-4 w-4" />
-                Start Exam
-              </>
-            )}
-            {isUpcoming && (
-              <>
-                <Clock className="mr-2 h-4 w-4" />
-                Coming Soon
-              </>
-            )}
-            {isEnded && (
-              <>
-                <CheckCircle className="mr-2 h-4 w-4" />
-                Ended
-              </>
-            )}
-          </Link>
+          <Link href={`/exams/${id}`}>View Details</Link>
         </Button>
       </CardContent>
     </Card>

@@ -1,9 +1,4 @@
-import { Part, Toeic } from "@/payload-types";
-import {
-  baseProcedure,
-  createTRPCRouter,
-  protectedProcedure,
-} from "@/trpc/init";
+import { createTRPCRouter, protectedProcedure } from "@/trpc/init";
 import { TRPCError } from "@trpc/server";
 import z from "zod";
 
@@ -25,28 +20,37 @@ export const examsRouter = createTRPCRouter({
 
     const exams = classes.docs.flatMap((doc) =>
       doc.exams?.map((e) => {
-        if (typeof e === "number") return null;
-        return { ...e, test: e.test as Toeic };
+        if (typeof e === "number" || typeof e.test === "number") return null;
+        return {
+          ...e,
+          test: {
+            ...e.test,
+            audioFile: undefined,
+            answers: undefined,
+            parts: undefined,
+          },
+        };
       })
     );
 
     return exams;
   }),
-  getOne: baseProcedure
-    .input(z.object({ testId: z.string() }))
+  getOne: protectedProcedure
+    .input(z.object({ examId: z.string() }))
     .query(async ({ ctx, input }) => {
-      const testData = await ctx.db.findByID({
-        collection: "toeic",
-        id: input.testId,
-        select: {
-          audioFile: false,
-          answers: false,
-        },
+      const examData = await ctx.db.findByID({
+        collection: "exams",
+        id: input.examId,
       });
 
-      if (!testData || testData.metadata?.isPublished !== true) {
+      if (!examData) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Exam not found" });
+      }
+
+      if (!examData.test || typeof examData.test === "number") {
         throw new TRPCError({ code: "NOT_FOUND", message: "Test not found" });
       }
+      const testData = examData.test;
 
       const parts = Array.isArray(testData.parts)
         ? testData.parts.map((part) =>
@@ -57,8 +61,8 @@ export const examsRouter = createTRPCRouter({
         : [];
 
       return {
-        ...testData,
-        parts: parts as Part[] | [],
+        ...examData,
+        test: { ...testData, parts, audioFile: undefined, answers: undefined },
       };
     }),
 });
