@@ -27,14 +27,14 @@ import { QuestionItemCard } from "../components/question-item-card";
 import { useRouter } from "next/navigation";
 
 interface Props {
-  testType: string;
+  testType?: string;
   testId: string;
 }
 
 interface testDataType {
   id: number;
   attemptId: number;
-  audio?: string | undefined;
+  audio?: string | null | undefined;
   title: string;
   description?: string | null;
   duration: number;
@@ -83,7 +83,7 @@ function CountdownDisplay({
   );
 }
 
-export const TestStartView = ({ testType, testId }: Props) => {
+export const TestStartView = ({ testType = "toeic", testId }: Props) => {
   const [testData, setTestData] = useState<testDataType | null>(null);
   const [questionItemList, setQuestionItemList] = useState<
     ToeicAttemptsQuestionItemOutput[]
@@ -117,7 +117,7 @@ export const TestStartView = ({ testType, testId }: Props) => {
         setTestData({
           id: data.id,
           attemptId: data.attemptId,
-          audio: data.audioFile?.url ?? undefined,
+          audio: data.audioFile?.url ?? null,
           duration: data.duration,
           title: data.title,
           totalQuestions: data.totalQuestions,
@@ -125,6 +125,10 @@ export const TestStartView = ({ testType, testId }: Props) => {
           difficulty: data.difficulty,
           parts: formattedTestParts,
         });
+
+        if (!data.audioFile?.url) {
+          setEndAt(Date.now() + (data.duration ?? 0) * 60 * 1000);
+        }
       },
       onError: (error) => {
         toast.error(error.message);
@@ -245,12 +249,14 @@ export const TestStartView = ({ testType, testId }: Props) => {
         <div className="flex gap-6">
           <div className="flex-1 min-w-0 space-y-6">
             {/* Audio */}
-            <AudioPlayer
-              audioSrc={testData?.audio}
-              onReady={() =>
-                setEndAt(Date.now() + (testData?.duration ?? 0) * 60 * 1000)
-              }
-            />
+            {testData?.audio && (
+              <AudioPlayer
+                audioSrc={testData?.audio}
+                onReady={() =>
+                  setEndAt(Date.now() + (testData?.duration ?? 0) * 60 * 1000)
+                }
+              />
+            )}
             {/* Question */}
             {questionItemList.length > 0 && endAt !== null && (
               <QuestionItemCard

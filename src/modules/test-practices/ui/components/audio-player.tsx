@@ -8,7 +8,7 @@ export const AudioPlayer = ({
   audioSrc,
   onReady,
 }: {
-  audioSrc: string | undefined;
+  audioSrc: string | null | undefined;
   onReady?: () => void;
 }) => {
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -18,6 +18,10 @@ export const AudioPlayer = ({
   const [volume, setVolume] = useState(1);
   const [isMuted, setIsMuted] = useState(false);
 
+  if (audioSrc === null) {
+    onReady?.();
+    return null;
+  }
   const handleTimeUpdate = () => {
     if (audioRef.current) {
       setCurrentTime(audioRef.current.currentTime);
