@@ -185,9 +185,10 @@ export const toeicAttemptsRouter = createTRPCRouter({
       }[] = testParts?.map((part) => {
         return {
           pType: part.sectionType,
-          start: part.questionItems
-            ? part.questionItems[0].questions?.[0].questionNumber ?? 0
-            : 0,
+          start:
+            part.questionItems && part.questionItems.length > 0
+              ? part.questionItems[0].questions?.[0].questionNumber ?? 0
+              : 0,
           check: 0,
         };
       });

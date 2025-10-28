@@ -50,14 +50,14 @@ export const SingleExamView = ({ examId }: Props) => {
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl">
       <Button variant="ghost" asChild>
-        <Link href={"/exams}"}>
+        <Link href={"/exams"}>
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back to Exams
         </Link>
       </Button>
 
       {/* Header */}
-      <div className="flex items-start justify-between my-8">
+      <div className="flex items-start my-8">
         <div className="flex-1">
           <div className="flex items-center gap-3 mb-2">
             <Trophy className="h-8 w-8 text-yellow-500" />
@@ -70,18 +70,6 @@ export const SingleExamView = ({ examId }: Props) => {
             {examData?.description}
           </p>
         </div>
-        <Badge
-          variant={
-            examData?.isActive
-              ? "default"
-              : examData?.isEnded
-              ? "secondary"
-              : "outline"
-          }
-          className="text-base px-4 py-2"
-        >
-          {examData?.status}
-        </Badge>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -220,13 +208,15 @@ export const SingleExamView = ({ examId }: Props) => {
                 className="w-full"
                 size="lg"
                 disabled={!examData?.isActive}
-                // onClick={() => onStartExam(exam)}
               >
                 {examData?.isActive && (
-                  <>
+                  <Link
+                    href={`/exams/${examId}/start`}
+                    className="w-full flex items-center justify-center"
+                  >
                     <Play className="mr-2 h-5 w-5" />
                     Start Exam Now
-                  </>
+                  </Link>
                 )}
                 {examData?.isUpcoming && (
                   <>
