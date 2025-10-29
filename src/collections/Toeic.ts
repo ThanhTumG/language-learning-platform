@@ -43,6 +43,11 @@ export const Toeic: CollectionConfig = {
       defaultValue: 200,
     },
     {
+      name: "isPractice",
+      type: "checkbox",
+      defaultValue: true,
+    },
+    {
       name: "difficulty",
       type: "select",
       options: [

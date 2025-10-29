@@ -200,7 +200,7 @@ export interface Exam {
   results?: (number | ToeicAttempt)[] | null;
   startTime: string;
   endTime: string;
-  numberOfParticipants?: number | null;
+  participant?: (number | User)[] | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -214,6 +214,7 @@ export interface Toeic {
   description?: string | null;
   duration: number;
   totalQuestions: number;
+  isPractice?: boolean | null;
   difficulty?: ('easy' | 'medium' | 'hard') | null;
   audioFile?: (number | null) | Media;
   parts?: (number | Part)[] | null;
@@ -512,6 +513,7 @@ export interface ToeicSelect<T extends boolean = true> {
   description?: T;
   duration?: T;
   totalQuestions?: T;
+  isPractice?: T;
   difficulty?: T;
   audioFile?: T;
   parts?: T;
@@ -684,7 +686,7 @@ export interface ExamsSelect<T extends boolean = true> {
   results?: T;
   startTime?: T;
   endTime?: T;
-  numberOfParticipants?: T;
+  participant?: T;
   updatedAt?: T;
   createdAt?: T;
 }

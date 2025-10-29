@@ -44,7 +44,16 @@ export const SingleExamView = ({ examId }: Props) => {
     const isActive = status === "active";
     const isUpcoming = status === "upcoming";
     const isEnded = status === "ended";
-    return { ...data, status, isActive, isUpcoming, isEnded };
+    return {
+      ...data,
+      participant: data.participant.map((p) =>
+        typeof p === "object" ? p.id : p
+      ),
+      status,
+      isActive,
+      isUpcoming,
+      isEnded,
+    };
   }, [data]);
 
   return (
@@ -198,7 +207,7 @@ export const SingleExamView = ({ examId }: Props) => {
                 <Users className="h-5 w-5 text-muted-foreground" />
                 <div className="text-center">
                   <p className="text-2xl">
-                    {examData?.numberOfParticipants ?? 0}
+                    {examData?.participant?.length ?? 0}
                   </p>
                   <p className="text-sm text-muted-foreground">participants</p>
                 </div>
@@ -207,7 +216,9 @@ export const SingleExamView = ({ examId }: Props) => {
               <Button
                 className="w-full"
                 size="lg"
-                disabled={!examData?.isActive}
+                disabled={
+                  !examData?.isActive || examData.user in examData.participant
+                }
               >
                 {examData?.isActive && (
                   <Link

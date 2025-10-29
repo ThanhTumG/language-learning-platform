@@ -51,12 +51,14 @@ export const Exams: CollectionConfig = {
       },
     },
     {
-      name: "numberOfParticipants",
-      type: "number",
+      name: "participant",
+      type: "relationship",
+      relationTo: "users",
       admin: {
         readOnly: true,
       },
-      defaultValue: 0,
+      hasMany: true,
+      defaultValue: [],
     },
   ],
 };

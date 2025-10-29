@@ -64,6 +64,7 @@ export const toeicAttemptsRouter = createTRPCRouter({
     .input(
       z.object({
         testId: z.string(),
+        examId: z.string().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -98,40 +99,65 @@ export const toeicAttemptsRouter = createTRPCRouter({
                 equals: input.testId,
               },
             },
-            {
-              status: {
-                equals: "in_progress",
-              },
-            },
           ],
         },
       });
 
       let attemptId = null;
 
-      if (attemptStartExisting.totalDocs === 0) {
-        const attemptNumber = await ctx.db.count({
-          collection: "toeic-attempts",
-          where: {
-            user: { equals: ctx.session.user.id },
-            test: { equals: testData.id },
-          },
+      if (attemptStartExisting.totalDocs > 0) {
+        attemptStartExisting.docs.forEach((attempt) => {
+          if (
+            attempt.status === "in_progress" ||
+            testData.isPractice === false
+          ) {
+            throw new TRPCError({
+              code: "BAD_REQUEST",
+              message:
+                "You have an ongoing attempt for this test or you are not allowed to retake this test.",
+            });
+          }
+        });
+      }
+
+      const attemptNumber = await ctx.db.count({
+        collection: "toeic-attempts",
+        where: {
+          user: { equals: ctx.session.user.id },
+          test: { equals: testData.id },
+        },
+      });
+
+      const { id } = await ctx.db.create({
+        collection: "toeic-attempts",
+        data: {
+          user: ctx.session.user.id,
+          test: testData.id,
+          attemptTitle: testData.title,
+          attemptNumber: attemptNumber.totalDocs + 1,
+          status: "in_progress",
+        },
+      });
+      attemptId = id;
+
+      if (input.examId) {
+        const exam = await ctx.db.findByID({
+          collection: "exams",
+          id: input.examId,
+          depth: 0,
         });
 
-        const { id } = await ctx.db.create({
-          collection: "toeic-attempts",
+        const participants = exam.participant ?? [];
+
+        await ctx.db.update({
+          collection: "exams",
+          id: input.examId,
           data: {
-            user: ctx.session.user.id,
-            test: testData.id,
-            attemptTitle: testData.title,
-            attemptNumber: attemptNumber.totalDocs + 1,
-            status: "in_progress",
+            participant: [...participants, ctx.session.user.id],
           },
         });
-        attemptId = id;
-      } else {
-        attemptId = attemptStartExisting.docs[0].id;
       }
+      // attemptId = attemptStartExisting.docs[0].id;
 
       return {
         ...testData,

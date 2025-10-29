@@ -124,7 +124,7 @@ export const ExamsView = () => {
                 testDuration={exam.test.duration}
                 startTime={exam.startTime}
                 endTime={exam.endTime}
-                numOfParticipants={exam.numberOfParticipants ?? 0}
+                numOfParticipants={exam.participant?.length ?? 0}
                 testType={"toeic"}
               />
             );
