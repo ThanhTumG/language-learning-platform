@@ -9,18 +9,29 @@ import {
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useTRPC } from "@/trpc/client";
-import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
+import {
+  useMutation,
+  useQueryClient,
+  useSuspenseQuery,
+} from "@tanstack/react-query";
 import { toast } from "sonner";
 import { UpdateProfileForm } from "../components/update-profile-form";
 import { ProfileSchemaType } from "@/modules/user/schemas";
+import { fileToBase64 } from "@/modules/media/utils";
 
 export const ProfileView = () => {
   const trpc = useTRPC();
 
   const { data } = useSuspenseQuery(trpc.user.getInfo.queryOptions());
 
+  const queryClient = useQueryClient();
+
   const updateUser = useMutation(
     trpc.user.updateInfo.mutationOptions({
+      onSuccess: async () => {
+        await queryClient.invalidateQueries(trpc.auth.session.queryOptions());
+        toast.success("User profile has been updated");
+      },
       onError: (error) => {
         console.error("Failed to update user info:", error);
         toast.error("Failed to update user info");
@@ -28,40 +39,21 @@ export const ProfileView = () => {
     })
   );
 
-  const createMedia = useMutation(trpc.media.create.mutationOptions());
-
   const handleUpdateProfile = async (data: ProfileSchemaType) => {
     console.log("user update data: ", data.avatar);
     try {
-      const formData = new FormData();
+      const imageBase64 = await fileToBase64(data.avatar);
 
-      const timestamps = new Date().toLocaleString();
-      formData.append("file", data.avatar);
-
-      for (const [key, value] of formData.entries()) {
-        console.log("key:", key); // sẽ thấy "Alt"
-      }
-
-      const res = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/media`, {
-        method: "POST",
-        body: formData,
+      updateUser.mutate({
+        fullName: data.fullname,
+        imageBase64,
+        mimeType: data.avatar.type,
+        fileName: data.avatar.name,
       });
-
-      if (res.ok) {
-        console.log(res.url);
-      }
-    } catch {
-      toast.error("Error upload image");
+    } catch (error) {
+      console.error(error);
+      toast.error("Error upload file");
     }
-
-    // const {id : avatarId} = createMedia.mutate({
-    //   file: data.avatar
-    // })
-
-    // updateUser.mutate({
-    //   fullName: data.fullname,
-    //   avatarId: avatarId,
-    // });
   };
 
   return (

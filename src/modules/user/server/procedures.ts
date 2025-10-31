@@ -26,16 +26,39 @@ export const userRouter = createTRPCRouter({
     .input(
       z.object({
         fullName: z.string().min(1).max(100),
-        avatarId: z.string(),
+        imageBase64: z.string().optional(),
+        mimeType: z.string().optional(),
+        fileName: z.string().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
+      let avatarId = undefined;
+      if (input.imageBase64 && input.mimeType && input.fileName) {
+        const buffer = Buffer.from(
+          input.imageBase64?.replace(/^data:image\/\w+;base64,/, ""),
+          "base64"
+        );
+
+        avatarId = await ctx.db.create({
+          collection: "media",
+          data: {
+            alt: input.fileName,
+          },
+
+          file: {
+            data: buffer,
+            mimetype: input.mimeType,
+            name: input.fileName,
+            size: buffer.length,
+          },
+        });
+      }
       await ctx.db.update({
         collection: "users",
         id: ctx.session.user.id,
         data: {
           fullname: input.fullName,
-          avatar: Number(input.avatarId),
+          avatar: avatarId,
         },
       });
     }),
