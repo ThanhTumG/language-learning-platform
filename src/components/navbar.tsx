@@ -148,7 +148,7 @@ export const Navbar = () => {
                   Admin Panel
                 </DropdownMenuItem>
               ) : (
-                <DropdownMenuItem>
+                <DropdownMenuItem onClick={() => router.push("/profile")}>
                   <User className="mr-2 h-4 w-4" />
                   Profile
                 </DropdownMenuItem>
