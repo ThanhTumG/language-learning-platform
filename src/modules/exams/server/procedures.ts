@@ -5,9 +5,7 @@ import z from "zod";
 
 export const examsRouter = createTRPCRouter({
   getMany: protectedProcedure.query(async ({ ctx }) => {
-    const classesId = ctx.session.user.class?.map((c) =>
-      typeof c === "object" ? c.id : c
-    );
+    const classesId = ctx.session.user.class;
     const classes = await ctx.db.find({
       collection: "classes",
       pagination: false,

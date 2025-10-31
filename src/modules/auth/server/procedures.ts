@@ -1,8 +1,13 @@
-import { baseProcedure, createTRPCRouter } from "@/trpc/init";
+import {
+  baseProcedure,
+  createTRPCRouter,
+  protectedProcedure,
+} from "@/trpc/init";
 import { headers as getHeaders, cookies as getCookies } from "next/headers";
 import { TRPCError } from "@trpc/server";
 import { loginSchema, registerSchema } from "../schemas";
 import { generateAuthCookie } from "../utils";
+import { changePasswordSchema } from "@/modules/user/schemas";
 
 export const authRouter = createTRPCRouter({
   session: baseProcedure.query(async ({ ctx }) => {
@@ -93,4 +98,24 @@ export const authRouter = createTRPCRouter({
     });
     return data;
   }),
+  changePassword: protectedProcedure
+    .input(changePasswordSchema)
+    .mutation(async ({ ctx, input }) => {
+      const res = await ctx.db.forgotPassword({
+        collection: "users",
+        data: {
+          email: ctx.session.user.email,
+        },
+        disableEmail: true,
+      });
+
+      await ctx.db.resetPassword({
+        collection: "users",
+        data: {
+          password: input.newPw,
+          token: res,
+        },
+        overrideAccess: true,
+      });
+    }),
 });

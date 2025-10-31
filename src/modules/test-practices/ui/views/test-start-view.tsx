@@ -29,6 +29,7 @@ import { useRouter } from "next/navigation";
 interface Props {
   testType?: string;
   testId: string;
+  examId?: string;
 }
 
 interface testDataType {
@@ -83,7 +84,11 @@ function CountdownDisplay({
   );
 }
 
-export const TestStartView = ({ testType = "toeic", testId }: Props) => {
+export const TestStartView = ({
+  testType = "toeic",
+  testId,
+  examId,
+}: Props) => {
   const [testData, setTestData] = useState<testDataType | null>(null);
   const [questionItemList, setQuestionItemList] = useState<
     ToeicAttemptsQuestionItemOutput[]
@@ -183,7 +188,7 @@ export const TestStartView = ({ testType = "toeic", testId }: Props) => {
 
   useEffect(() => {
     if (!attemptCreatedRef.current) {
-      startTestMutation.mutate({ testId });
+      startTestMutation.mutate({ testId, examId });
       attemptCreatedRef.current = true;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

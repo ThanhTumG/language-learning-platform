@@ -47,7 +47,12 @@ export const protectedProcedure = baseProcedure.use(async ({ ctx, next }) => {
       ...ctx,
       session: {
         ...session,
-        user: session.user,
+        user: {
+          ...session.user,
+          class: session.user.class?.map((c) =>
+            typeof c === "object" ? c.id : c
+          ),
+        },
       },
     },
   });
