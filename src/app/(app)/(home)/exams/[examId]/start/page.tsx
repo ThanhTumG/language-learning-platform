@@ -16,7 +16,7 @@ export default async function Page({ params }: Props) {
     redirect("/sign-in");
   }
 
-  const { id } = await caller.exams.getOne({ examId });
+  const { test } = await caller.exams.getOne({ examId });
 
-  return <TestStartView testId={id.toString()} />;
+  return <TestStartView testId={test.id.toString()} examId={examId} />;
 }

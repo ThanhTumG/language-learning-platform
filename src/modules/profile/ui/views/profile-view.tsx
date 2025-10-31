@@ -16,8 +16,12 @@ import {
 } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { UpdateProfileForm } from "../components/update-profile-form";
-import { ProfileSchemaType } from "@/modules/user/schemas";
+import {
+  ChangePasswordSchemaType,
+  ProfileSchemaType,
+} from "@/modules/user/schemas";
 import { fileToBase64 } from "@/modules/media/utils";
+import { ChangePasswordForm } from "../components/change-password-form";
 
 export const ProfileView = () => {
   const trpc = useTRPC();
@@ -39,21 +43,39 @@ export const ProfileView = () => {
     })
   );
 
+  const changePassword = useMutation(
+    trpc.auth.changePassword.mutationOptions({
+      onSuccess: () => {
+        toast.success("Your password has been updated");
+      },
+      onError: (error) => {
+        console.error("Failed to change password:", error);
+        toast.error("Failed to change password");
+      },
+    })
+  );
+
   const handleUpdateProfile = async (data: ProfileSchemaType) => {
-    console.log("user update data: ", data.avatar);
     try {
-      const imageBase64 = await fileToBase64(data.avatar);
+      const imageBase64 = data.avatar
+        ? await fileToBase64(data.avatar)
+        : undefined;
 
       updateUser.mutate({
         fullName: data.fullname,
         imageBase64,
-        mimeType: data.avatar.type,
-        fileName: data.avatar.name,
+        mimeType: data.avatar?.type,
+        fileName: data.avatar?.name,
       });
     } catch (error) {
       console.error(error);
       toast.error("Error upload file");
     }
+  };
+
+  const handleChangePassword = async (data: ChangePasswordSchemaType) => {
+    console.log("data", data);
+    changePassword.mutate(data);
   };
 
   return (
@@ -77,6 +99,7 @@ export const ProfileView = () => {
               <UpdateProfileForm
                 fullname={data.fullname}
                 onUpdate={handleUpdateProfile}
+                isPending={updateUser.isPending}
               />
             </CardContent>
           </Card>
@@ -89,7 +112,12 @@ export const ProfileView = () => {
               <CardTitle>Security</CardTitle>
               <CardDescription>Change your password.</CardDescription>
             </CardHeader>
-            <CardContent>{/* <UpdatePasswordForm /> */}</CardContent>
+            <CardContent className="space-y-6">
+              <ChangePasswordForm
+                onUpdate={handleChangePassword}
+                isPending={changePassword.isPending}
+              />
+            </CardContent>
           </Card>
         </TabsContent>
       </Tabs>

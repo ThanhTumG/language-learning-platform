@@ -30,7 +30,6 @@ export const toeicAttemptsRouter = createTRPCRouter({
         test: attemptData.test as Toeic | null,
       };
     }),
-
   getMany: protectedProcedure
     .input(
       z.object({
